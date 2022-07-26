@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Roles {
+  id Int @id @default(autoincrement())
+  role_name String
+  users Users[]
+}
+
+model Users {
+  id Int @id @default(autoincrement())
+  full_name String
+  email String @unique
+  password String
+  phone String 
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  role Roles @relation(fields: [role_id], references: [id])
+  role_id Int 
+  posts Posts[]
+  comment Comments[]
+}
+
+model Posts {
+  id Int @id @default(autoincrement())
+  title String
+  content String
+  price Float
+  phone String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  views Int @default(0)
+  status String
+  user Users @relation(fields: [user_id], references: [id])
+  user_id Int 
+  image Images[]
+  comment Comments[]
+  address Address?
+
+}
+
+model Images {
+  id Int @id @default(autoincrement())
+  image_path String
+  post Posts @relation(fields: [post_id], references: [id])
+  post_id Int
+}
+
+model Comments {
+  id Int @id @default(autoincrement())
+  user Users @relation(fields: [user_id], references: [id])
+  user_id Int 
+  post Posts @relation(fields: [post_id], references: [id])
+  post_id Int 
+  comment String @db.VarChar(500)
+}
+
+model Messages {
+  id Int @id @default(autoincrement())
+  sender_id Int
+  receive_id Int
+  message String @db.VarChar(500)
+  status String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+}
+
+model Reviews {
+  id Int @id @default(autoincrement())
+  user_id Int
+  seller_id Int
+  review String @db.VarChar(500)
+  rating Float
+}
+
+model Address {
+  id Int @id @default(autoincrement())
+  city String
+  district String
+  ward String
+  street String
+  post Posts @relation(fields: [id], references: [id])
+}
+
+
