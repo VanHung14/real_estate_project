@@ -1,0 +1,4 @@
+If you want to send mail from localhost or without ssl certificate, you can execute the following command on your terminal also:
+npm config set strict-ssl false --global
+
+set NODE_TLS_REJECT_UNAUTHORIZED=0

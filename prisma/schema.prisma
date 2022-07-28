@@ -21,6 +21,7 @@ model Users {
   phone String? 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
+  reset_password_token String?
   role Roles @relation(fields: [role_id], references: [id])
   role_id Int 
   posts Posts[]
