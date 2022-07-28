@@ -10,10 +10,12 @@ const config = require('../configs/config');
 
 module.exports = async function (req, res, next){
     const token = req.body.token || req.query.token || req.headers['x-access-token'];
-    // console.log('token', token)
+    // console.log('bodyauth', req.body)
+    // console.log('files', req.files)
     
     if (token) {
         try {
+          // console.log('auth', req.body)
           const decoded = await utils.verifyJwtToken(token, config.secret);
           req.user = decoded;
           next();

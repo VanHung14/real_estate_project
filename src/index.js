@@ -1,13 +1,13 @@
 const express = require('express')
 const app = express()
+const path = require('path')
+
 const port = process.env.PORT || 3000
 const route = require('./routes')
 var bodyParser = require('body-parser')
 
 
-// app.get('/', (req, res) => {
-//   res.send('Hello World!')
-// })
+app.use(express.static(path.join(__dirname, 'models')))
 
 app.use(bodyParser.json());
 

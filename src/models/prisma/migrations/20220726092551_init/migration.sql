@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `posts` MODIFY `views` INTEGER NOT NULL DEFAULT 0;
