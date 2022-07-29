@@ -7,6 +7,8 @@ const config = require('../configs/config');
 const jwt = require('jsonwebtoken')
 const utils = require('../utils/utils');
 const prisma = new PrismaClient()
+const randtoken = require('rand-token')
+const nodemailer = require('nodemailer')
 const tokenList = {};
 class LoginController {
 
@@ -114,32 +116,7 @@ class LoginController {
         return res.send('Logout successul!')
     }
 
-    // [POST]/reset-password-email
-    async resetPasswordEmail(req, res, next){
-        var email = req.body.email;
-        let user = await prisma.users.findFirst({where: {
-            email: email
-        }})
-        if(user) {
-            var token = randtoken.generate(20);
-            var sent = sendEmail(email, token);
-            if(sent!='0'){
-                var data = {
-                    token: token
-                }
-                await prisma.users.update({where: {
-                    email: email,
-                  },
-                  data})
-            }
-            else{
-                res.status(400).send('Send email failed!')
-            }
-        }
-        else{
-            res.status(400).send('No user founded!')
-        }
-    }
+    
 }
 
 
@@ -151,37 +128,3 @@ module.exports = new LoginController;
 // console.log(validator.validate("hungdv_tts3@rikkeisoft.com"))
 
 
-//send email
-function sendEmail(email, token) {
- 
-    var email = email;
-    var token = token;
- 
-    var mail = nodemailer.createTransport({
-        // host: "smtp.ethereal.email",
-        // port: 587,
-        // secure: false, // true for 465, false for other ports
-
-        service: 'gmail',
-        auth: {
-            user: 'dinhvanhung173@gmail.com', // Your email id
-            pass: 'Dvh@0935678376' // Your password
-        }
-    });
- 
-    var mailOptions = {
-        from: 'dinhvanhung173@gmail.com',
-        to: email,
-        subject: 'Reset Password Link ',
-        html: '<p>You requested for reset password, kindly use this <a href="http://localhost:3306/reset-password?token=' + token + '">link</a> to reset your password</p>'
- 
-    };
- 
-    mail.sendMail(mailOptions, function(error, info) {
-        if (error) {
-            console.log(1)
-        } else {
-            console.log(0)
-        }
-    });
-}

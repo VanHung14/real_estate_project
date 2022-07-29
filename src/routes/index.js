@@ -3,7 +3,7 @@ const logoutRouter = require('./logout')
 const registerRouter = require('./register')
 const refreshTokenRouter = require('./refreshToken')
 const postsRouter = require('./posts')
-// const resetPasswordRouter = require('./resetPassword')
+const usersRouter = require('./users')
 
 
 function route(app){
@@ -12,7 +12,7 @@ function route(app){
     app.use('/register', registerRouter)
     app.use('/refreshToken', refreshTokenRouter)
     app.use('/posts', postsRouter)
-    // app.use('/reset-password-email', resetPasswordRouter)
+    app.use('/users', usersRouter)
 }
 
 module.exports = route

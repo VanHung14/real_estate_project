@@ -32,9 +32,12 @@ var type = upload.array('images', 5);
 
 const postsController = require('../controllers/PostsController')
 
+
 router.post('/create', [type, auth] , postsController.create)
 router.get('/', auth , postsController.all)
 router.get('/sort', auth , postsController.sort)
 router.get('/filter', auth , postsController.filter)
+router.get('/detail/:id', auth , postsController.detailPost)
+router.put('/update/:id', auth, postsController.updatePut)
 
 module.exports = router

@@ -5,6 +5,8 @@ const utils = require('../utils/utils');
 const fs = require('fs')
 var multer = require('multer');
 const { prependListener } = require('process');
+const { reset } = require('nodemon');
+const { post } = require('../routes/login');
 
 
 const prisma = new PrismaClient()
@@ -17,10 +19,10 @@ class PostsController {
         let posts = await prisma.posts.findMany()
         if(posts){
             for(var i = 0; i< posts.length;++i){
-                let address = await prisma.address.findFirst({where: {
-                    id : posts[i].id
-                }})
+                let address = await prisma.address.findFirst({where: {id : posts[i].id}})
                 posts[i].address = address
+                let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+                    posts[i].first_image_path= image.image_path
             }
             res.send(posts)
         }
@@ -55,12 +57,12 @@ class PostsController {
         })
         if(posts){
             for(var i = 0; i< posts.length;++i){
-                let address = await prisma.address.findFirst({where: {
-                    id : posts[i].id
-                }})
+                let address = await prisma.address.findFirst({where: {id : posts[i].id}})
                 posts[i].address = address
-                console.log(posts[i])
+                let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+                    posts[i].first_image_path= image.image_path
             }
+            
             res.send(posts)
         }
         else{
@@ -68,31 +70,84 @@ class PostsController {
         }
     }
 
-    // [POST] /posts/filter
+    // [GET] /posts/filter
     async filter (req, res, next){
-        let address = await prisma.address.findMany({ where :{
-            city: req.query.city,
-            district: req.query.district,
-            ward: req.query.ward,
-            // street: req.query.street,
-        }})
-        console.log(address)
-        let posts=[]
-        if(address){
-            for(var i = 0; i< address.length;++i){
-                let post = await prisma.address.findFirst({where: {
-                    id : address[i].id
+        var min = parseFloat(req.query.min) || 0
+        var max = parseFloat(req.query.max) 
+        console.log('min',min, 'max', max)
+        try{
+            if(req.query.max!=''){
+                let posts = await prisma.posts.findMany({where: {
+                    price: {
+                            lte: max,
+                            gte: min
+                    }
                 }})
-                posts[i]=post
-                posts[i].address = address[i]
+                for(var i =0; i<posts.length;++i){
+                    let address = await prisma.address.findFirst({where: { id: posts[i].id}})
+                    posts[i].address= address
+                    let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+                    posts[i].first_image_path= image.image_path
+                }
+                if(posts) {
+                    res.send(posts)
+                }
             }
-            res.send(posts)
+            else{
+                let address = await prisma.address.findMany({ where :{
+                    city: {contains: req.query.city},
+                    district: {contains: req.query.district},
+                    ward: {contains: req.query.ward},
+                    // street: req.query.street,
+                }})
+                let posts=[]
+                if(address){
+                    for(var i = 0; i< address.length;++i){
+                        let post = await prisma.posts.findFirst({where: {
+                            id : address[i].id
+                        }})
+                        posts[i]=post
+                        posts[i].address = address[i]
+                    }
+                    for(var i =0; i<posts.length;++i){
+                        let address = await prisma.address.findFirst({where: { id: posts[i].id}})
+                        posts[i].address= address
+                        let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+                        posts[i].first_image_path= image.image_path
+                    }
+                    res.send(posts)
+                }
+                else{
+                    res.status(404).send('Not found!')
+                }
+            }
+    
         }
-        else{
-            res.status(404).send('Not found!')
+        catch(err){
+            console.log(err)
         }
     }
 
+    // [GET]/posts/detail/:id
+    async detailPost(req, res, next){
+        let id = parseInt(req.params.id)
+        let post = await prisma.posts.findFirst({where: { id: id }})
+        if(post){
+            post.image_path_list=[]
+            let address = await prisma.address.findFirst({where: { id: post.id}})
+            post.address= address
+            let images = await prisma.images.findMany({where:{ post_id: post.id}})
+            for(var i =0;i<images.length;++i){
+                console.log(images[i].image_path)
+                post.image_path_list.push(images[i].image_path)
+            }
+            res.send(post)
+        }
+        else{
+            res.status(400).send('No post found!')
+        }
+    }
+    
     // [POST] /posts/create
     async create (req, res, next) {
 
@@ -164,6 +219,28 @@ class PostsController {
             }
         }
     }
+
+    // [PUT]/posts/update/:id
+    async updatePut(req, res, next){
+        let id = parseInt(req.params.id)
+        let post = await prisma.posts.findFirst({where: { id: id}})
+        if(post){
+            post.image_path_list=[]
+            let address = await prisma.address.findFirst({where: { id: post.id}})
+            post.address= address
+            let images = await prisma.images.findMany({where:{ post_id: post.id}})
+            for(var i =0;i<images.length;++i){
+                post.image_path_list.push(images[i].image_path)
+            }
+            res.send(post)
+        }
+        else{
+            res.status(400).send('No post found!')
+        }
+
+        
+    }
+
 }
 
 module.exports = new PostsController;
