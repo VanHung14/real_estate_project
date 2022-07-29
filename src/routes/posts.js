@@ -38,6 +38,7 @@ router.get('/', auth , postsController.all)
 router.get('/sort', auth , postsController.sort)
 router.get('/filter', auth , postsController.filter)
 router.get('/detail/:id', auth , postsController.detailPost)
-router.put('/update/:id', auth, postsController.updatePut)
+router.put('/updateNoDel/:id',[type, auth], postsController.updateNoDeleteOldImage)
+router.put('/updateDelOldImg/:id',[type, auth], postsController.updateDeleteOldImage)
 
 module.exports = router

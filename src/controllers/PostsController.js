@@ -3,10 +3,10 @@ const config = require('../configs/config');
 const jwt = require('jsonwebtoken')
 const utils = require('../utils/utils');
 const fs = require('fs')
-var multer = require('multer');
-const { prependListener } = require('process');
-const { reset } = require('nodemon');
-const { post } = require('../routes/login');
+// var multer = require('multer');
+// const { prependListener } = require('process');
+// const { reset } = require('nodemon');
+// const { post } = require('../routes/login');
 
 
 const prisma = new PrismaClient()
@@ -194,24 +194,18 @@ class PostsController {
             })
 
             if(post){
-                let findPost = await prisma.posts.findFirst({where: { address: {
-                    city: req.body.city,
-                    district: req.body.district,
-                    ward: req.body.ward,
-                    street: req.body.street}}})
-                
                 var array = req.files
                 for(var i =0; i< array.length; ++i){
                     array[i] = {    
                         image_path: array[i].path,
-                        post_id: findPost.id
+                        post_id: post.id
                     }
                 }
-
-                console.log('array path',array)
+                // console.log('array path',array)
                 let image = await prisma.images.createMany({
                     data : array
                 })
+                
                 res.send(post)
             }
             else{
@@ -221,25 +215,137 @@ class PostsController {
     }
 
     // [PUT]/posts/update/:id
-    async updatePut(req, res, next){
+    async updateNoDeleteOldImage(req, res, next){
         let id = parseInt(req.params.id)
-        let post = await prisma.posts.findFirst({where: { id: id}})
-        if(post){
-            post.image_path_list=[]
-            let address = await prisma.address.findFirst({where: { id: post.id}})
-            post.address= address
-            let images = await prisma.images.findMany({where:{ post_id: post.id}})
-            for(var i =0;i<images.length;++i){
-                post.image_path_list.push(images[i].image_path)
-            }
-            res.send(post)
+        console.log(req.body)
+        let date = new Date()
+        date.setHours(date.getHours()+7)
+        let check = await prisma.posts.findFirst({ where: { id: id }})
+        if (check.created_at != check.updated_at) { // ktra xem bai viet co ching sua lan nao chua
+            res.status(400).send('This post has been changed before.')
         }
         else{
-            res.status(400).send('No post found!')
+            let post = await prisma.posts.update({
+                where: {
+                    id: id
+                }, 
+                data: {
+                    title: req.body.title,
+                    content: req.body.content,
+                    price: parseFloat(req.body.price),
+                    phone: req.body.phone,
+                    status: req.body.status,
+                    updated_at: date,
+                    user_id: req.user.id,
+                }
+            })
+            if(post){
+                var array = req.files
+                for(var i =0; i< array.length; ++i){
+                    array[i] = {
+                        image_path: array[i].path,
+                        post_id: post.id
+                    }
+                }
+                console.log('array path',array)
+                let image = await prisma.images.createMany({
+                    data : array
+                })
+                let address = await prisma.address.update({
+                    where:{
+                        id: post.id
+                    }
+                    ,data: {
+                        city: req.body.city,
+                        district: req.body.district,
+                        ward: req.body.ward,
+                        street: req.body.street
+                    }
+                })
+                res.send(post)
+            }
+            else{
+                res.status(400).send('No post found!')
+            }
         }
-
         
     }
+
+
+    // [PUT]/posts/update/:id
+    async updateDeleteOldImage(req, res, next){
+        let id = parseInt(req.params.id)
+        let date = new Date()
+        date.setHours(date.getHours()+7)
+        let check = await prisma.posts.findFirst({ where: { id: id }})
+        if (check.created_at != check.updated_at) { // ktra xem bai viet co ching sua lan nao chua
+            res.status(400).send('This post has been changed before.')
+        }
+        else{
+            let post = await prisma.posts.update({
+                where: {
+                    id: id
+                }, 
+                data: {
+                    title: req.body.title,
+                    content: req.body.content,
+                    price: parseFloat(req.body.price),
+                    phone: req.body.phone,
+                    status: req.body.status,
+                    updated_at: date,
+                    user_id: req.user.id,
+                }
+            })
+            if(post){
+                var array = req.files
+                for(var i =0; i< array.length; ++i){
+                    array[i] = {
+                        image_path: array[i].path,
+                        post_id: post.id
+                    }
+                }
+                // console.log('array path',array)
+                // delete image in local folder
+                let oldImage = await prisma.images.findMany({ where: { post_id: post.id}}) 
+                console.log(oldImage)
+                try {
+                    for(var i =0; i< oldImage.length; ++i){
+                        fs.unlinkSync(oldImage[i].image_path)
+                    }
+                  } catch(err) {
+                    console.error(err)
+                  }
+                res.send(post)
+    
+                // delete record in DB
+                let deleteImg = await prisma.images.deleteMany({ where: { post_id: post.id}})
+    
+                // create new record
+                let image = await prisma.images.createMany({
+                    data : array
+                })
+                // update new address
+                let address = await prisma.address.update({
+                    where:{
+                        id: post.id
+                    }
+                    ,data: {
+                        city: req.body.city,
+                        district: req.body.district,
+                        ward: req.body.ward,
+                        street: req.body.street
+                    }
+                })
+                
+            }
+            else{
+                res.status(400).send('No post found!')
+            }
+        }
+        
+        
+    }
+
 
 }
 

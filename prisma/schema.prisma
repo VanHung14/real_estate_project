@@ -30,13 +30,13 @@ model Users {
 
 model Posts {
   id Int @id @default(autoincrement())
-  title String
+  title String?
   content String?
-  price Float @default(0)
+  price Float? @default(0)
   phone String?
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
-  views Int @default(0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+  views Int? @default(0)
   status String?
   user Users @relation(fields: [user_id], references: [id])
   user_id Int 
