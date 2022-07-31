@@ -3,9 +3,13 @@ const router = express.Router()
 
 const usersController = require('../controllers/UsersController')
 
-router.get('/reset-password', usersController.linkResetPassword)
+
+router.post('/login', usersController.login)
+router.post('/refresh-token', usersController.refreshToken)
+// router.get('/reset-password', usersController.linkResetPassword)
 router.post('/reset-password-email', usersController.resetPasswordEmail)
-router.post('/reset-password', usersController.updatePassword)
+router.put('/update-password', usersController.updatePassword)
+router.post('/', usersController.register)
 
 
 module.exports = router

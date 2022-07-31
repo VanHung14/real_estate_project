@@ -14,119 +14,126 @@ const prisma = new PrismaClient()
 class PostsController {
 
 
-    // [GET] /posts/
-    async all (req, res, next) {
-        let posts = await prisma.posts.findMany()
-        if(posts){
-            for(var i = 0; i< posts.length;++i){
-                let address = await prisma.address.findFirst({where: {id : posts[i].id}})
-                posts[i].address = address
-                let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
-                    posts[i].first_image_path= image.image_path
+    // [GET] /api/posts?sort=&direct=
+    async getPosts(req, res, next) {
+        if(JSON.stringify(req.query) === JSON.stringify({})){ // get all posts 
+            let posts = await prisma.posts.findMany()
+            if(posts){
+                for(var i = 0; i< posts.length;++i){
+                    let address = await prisma.address.findFirst({where: {id : posts[i].id}})
+                    posts[i].address = address
+                    let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+                        posts[i].first_image_path= image.image_path
+                }
+                res.send(posts)
             }
-            res.send(posts)
+            else{
+                res.status(404).send('Not found!')
+            }
         }
-        else{
-            res.status(404).send('Not found!')
-        }
-    }
-
-    // [GET] /posts/sort?price=?&views=?&created_at=?
-    async sort (req, res, next) {
-        let sort = {}
-        if(req.query.price == 'asc') {
-            sort = { price: 'asc'}
-        }
-        else if (req.query.price == 'desc') {
-            sort = { price: 'desc'}
-        }
-        else if (req.query.views == 'asc') {
-            sort = { views: 'asc'}
-        }
-        else if (req.query.views == 'desc') {
-            sort = { views: 'desc'}
-        }
-        else if (req.query.created_at == 'asc') {
-            sort = { created_at: 'asc'}
-        }
-        else if (req.query.created_at == 'desc') {
-            sort = { created_at: 'desc'}
-        }
-        let posts = await prisma.posts.findMany({
-            orderBy: [sort]
-        })
-        if(posts){
-            for(var i = 0; i< posts.length;++i){
-                let address = await prisma.address.findFirst({where: {id : posts[i].id}})
-                posts[i].address = address
-                let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+        else { // co sort hoac filter
+            let sortKey = req.query.sort || 'price'
+            let sortDirect = req.query.direct || 'desc'
+            let sort = {}
+            sort[sortKey]= sortDirect
+            
+            let filter = req.query.filter || 'price'
+            console.log(filter)
+            let posts = []
+            if(filter == 'price'){
+                let min = req.query.min || 0
+                let max = req.query.max || 100
+                posts = await prisma.posts.findMany({ where: { price: {
+                    lte: max,
+                    gte: min
+                }},
+                    orderBy: [sort],
+                })
+            }
+            else {
+                posts = await prisma.posts.findMany({ where: {
+                    address: {
+                        city: {contains: req.query.city},
+                        district: {contains: req.query.district},
+                        ward: {contains: req.query.ward}}
+                },
+                    orderBy: [sort],
+                })
+            }
+            if(posts){
+                for(var i = 0; i< posts.length;++i){
+                    let address = await prisma.address.findFirst({where: {id : posts[i].id}})
+                    posts[i].address = address
+                    let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
                     posts[i].first_image_path= image.image_path
+
+                }
+                res.send(posts)
+            }
+            else{
+                res.status(404).send('Not found!')
             }
             
-            res.send(posts)
-        }
-        else{
-            res.status(404).send('Not found!')
         }
     }
 
     // [GET] /posts/filter
-    async filter (req, res, next){
-        var min = parseFloat(req.query.min) || 0
-        var max = parseFloat(req.query.max) 
-        console.log('min',min, 'max', max)
-        try{
-            if(req.query.max!=''){
-                let posts = await prisma.posts.findMany({where: {
-                    price: {
-                            lte: max,
-                            gte: min
-                    }
-                }})
-                for(var i =0; i<posts.length;++i){
-                    let address = await prisma.address.findFirst({where: { id: posts[i].id}})
-                    posts[i].address= address
-                    let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
-                    posts[i].first_image_path= image.image_path
-                }
-                if(posts) {
-                    res.send(posts)
-                }
-            }
-            else{
-                let address = await prisma.address.findMany({ where :{
-                    city: {contains: req.query.city},
-                    district: {contains: req.query.district},
-                    ward: {contains: req.query.ward},
-                    // street: req.query.street,
-                }})
-                let posts=[]
-                if(address){
-                    for(var i = 0; i< address.length;++i){
-                        let post = await prisma.posts.findFirst({where: {
-                            id : address[i].id
-                        }})
-                        posts[i]=post
-                        posts[i].address = address[i]
-                    }
-                    for(var i =0; i<posts.length;++i){
-                        let address = await prisma.address.findFirst({where: { id: posts[i].id}})
-                        posts[i].address= address
-                        let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
-                        posts[i].first_image_path= image.image_path
-                    }
-                    res.send(posts)
-                }
-                else{
-                    res.status(404).send('Not found!')
-                }
-            }
+    // async filter (req, res, next){
+    //     var min = parseFloat(req.query.min) || 0
+    //     var max = parseFloat(req.query.max) 
+    //     console.log('min',min, 'max', max)
+    //     try{
+    //         if(req.query.max!=''){
+    //             let posts = await prisma.posts.findMany({where: {
+    //                 price: {
+    //                         lte: max,
+    //                         gte: min
+    //                 }
+    //             }})
+    //             for(var i =0; i<posts.length;++i){
+    //                 let address = await prisma.address.findFirst({where: { id: posts[i].id}})
+    //                 posts[i].address= address
+    //                 let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+    //                 posts[i].first_image_path= image.image_path
+    //             }
+    //             if(posts) {
+    //                 res.send(posts)
+    //             }
+    //         }
+    //         else{
+    //             let address = await prisma.address.findMany({ where :{
+    //                 city: {contains: req.query.city},
+    //                 district: {contains: req.query.district},
+    //                 ward: {contains: req.query.ward},
+    //                 // street: req.query.street,
+    //             }})
+    //             let posts=[]
+    //             if(address){
+    //                 for(var i = 0; i< address.length;++i){
+    //                     let post = await prisma.posts.findFirst({where: {
+    //                         id : address[i].id
+    //                     }})
+    //                     posts[i]=post
+    //                     posts[i].address = address[i]
+    //                 }
+    //                 for(var i =0; i<posts.length;++i){
+    //                     let address = await prisma.address.findFirst({where: { id: posts[i].id}})
+    //                     posts[i].address= address
+    //                     let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
+    //                     posts[i].first_image_path= image.image_path
+    //                 }
+    //                 res.send(posts)
+    //             }
+    //             else{
+    //                 res.status(404).send('Not found!')
+    //             }
+    //         }
     
-        }
-        catch(err){
-            console.log(err)
-        }
-    }
+    //     }
+    //     catch(err){
+    //         console.log(err)
+    //     }
+    // }
 
     // [GET]/posts/detail/:id
     async detailPost(req, res, next){
@@ -148,7 +155,7 @@ class PostsController {
         }
     }
     
-    // [POST] /posts/create
+    // [POST] api/posts/
     async create (req, res, next) {
 
         let address = await prisma.address.findFirst({ where :{
