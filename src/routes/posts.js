@@ -13,6 +13,7 @@ router.get('/:id', auth , postsController.getPostById)
 // router.put('/:id',[uploadFile, auth], postsController.updateNoDeleteOldImage)
 // router.put('/:id/delImgs',[uploadFile, auth], postsController.updateDeleteOldImage)
 router.put('/:id',[uploadFile, auth], postsController.updatePost)
+router.delete('/:id',auth , postsController.deletePost)
 
 
 module.exports = router

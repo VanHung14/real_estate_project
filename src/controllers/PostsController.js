@@ -12,8 +12,14 @@ class PostsController {
     // [GET] /api/posts?sort=&direct=&filter=address&city=&district=&ward=
     async getPosts(req, res, next) {
         try{
+            let perPage = 10
+            let page = parseInt(req.query.page) || 1
+
             if(JSON.stringify(req.query) === JSON.stringify({})){ // get all posts 
-                let posts = await prisma.posts.findMany()
+                let posts = await prisma.posts.findMany({
+                    skip: (perPage * page) - perPage,
+                    take: perPage
+                })
                 if(posts){
                     for(var i = 0; i< posts.length;++i){
                         let address = await prisma.address.findFirst({where: {id : posts[i].id}})
@@ -28,6 +34,7 @@ class PostsController {
                 }
             }
             else { // co sort hoac filter
+
                 let sortKey = req.query.sort || 'price'
                 let sortDirect = req.query.direct || 'desc'
                 let sort = {}
@@ -36,10 +43,15 @@ class PostsController {
                 let filter = req.query.filter || 'price'
                 // console.log(filter)
                 let posts = []
+
                 if(filter == 'price'){
+                    
                     let min = req.query.min || 0
                     let max = req.query.max || 100
-                    posts = await prisma.posts.findMany({ where: { price: {
+                    posts = await prisma.posts.findMany({
+                        skip: (perPage * page) - perPage,
+                        take: perPage, 
+                        where: { price: {
                         lte: max,
                         gte: min
                     }},
@@ -47,23 +59,32 @@ class PostsController {
                     })
                 }
                 else {
-                    let address = await prisma.address.findMany({where: {
+                    let address = await prisma.address.findMany({
+                        skip: (perPage * page) - perPage,
+                        take: perPage,
+                        where: {
+                        
                         city: {contains: req.query.city},
                         district: {contains: req.query.district},
                         ward: {contains: req.query.ward},
                         street: {contains: req.query.street}
                     }})
+
+                    
                     let idList = []
                     for(var i = 0;i<address.length; ++i){
                         idList.push(address[i].id)
                     }
+
                     posts = await prisma.posts.findMany({ where: {
                         id : { in : idList}
                     },
                         orderBy: [sort],
                     })
+
                 }
                 if(posts){
+
                     for(var i = 0; i< posts.length;++i){
                         let address = await prisma.address.findFirst({where: {id : posts[i].id}})
                         posts[i].address = address
@@ -397,6 +418,24 @@ class PostsController {
             }
         }
         catch(err){
+            res.status(400).send(err)
+        }
+    }
+
+    // [DELETE] /api/posts/:id
+    async deletePost(req, res, next){
+        try{
+            var id = parseInt(req.params.id)
+            let delAddress = await prisma.address.delete({where: {
+                id: id,
+            }})
+            let delPost = await prisma.posts.delete({ where: {
+                id: id,
+            }})
+            res.send(delPost)
+        }
+        catch(err)
+        {
             res.status(400).send(err)
         }
     }
