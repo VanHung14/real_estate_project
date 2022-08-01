@@ -38,8 +38,12 @@
 // main().catch(console.error);
 
 
-const emailExistence = require('email-existence')
+// const emailExistence = require('email-existence')
 
-emailExistence.check('hungdv_tts@rikkeisoft.com', function(error, response){
-  console.log('res: '+response);
-});
+// emailExistence.check('hungdv_tts@rikkeisoft.com', function(error, response){
+//   console.log('res: '+response);
+// });
+
+var pagination = require('pagination');
+var paginator = pagination.create('search', {prelink:'/', current: 1, rowsPerPage: 200, totalResult: 10020});
+console.log(paginator.render());
