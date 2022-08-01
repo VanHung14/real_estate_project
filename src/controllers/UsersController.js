@@ -119,8 +119,8 @@ class UsersController {
         }
     }
 
-    // [POST] /api/users/reset-password-email
-    async resetPasswordEmail(req, res, next){
+    // [POST] /api/users/forgot-password
+    async forgotPassword(req, res, next){
         var email = req.body.email;
         var phone = req.body.phone;
         let user = await prisma.users.findFirst({where: {
@@ -155,8 +155,8 @@ class UsersController {
         console.log(token)
     }
 
-    //[PUT] /api/users/update-password
-    async updatePassword(req, res, next){
+    //[PUT] /api/users/reset-password
+    async resetPassword(req, res, next){    
         var token = req.body.token;
         var password = req.body.password;
         const salt = await bcrypt.genSalt(10)
