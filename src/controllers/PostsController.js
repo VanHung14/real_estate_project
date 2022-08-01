@@ -18,7 +18,7 @@ class PostsController {
             if(JSON.stringify(req.query) === JSON.stringify({})){ // get all posts 
                 let posts = await prisma.posts.findMany({
                     skip: (perPage * page) - perPage,
-                    take: perPage
+                    take: perPage,
                 })
                 if(posts){
                     for(var i = 0; i< posts.length;++i){
@@ -45,39 +45,59 @@ class PostsController {
                 let posts = []
 
                 if(filter == 'price'){
-                    
-                    let min = req.query.min || 0
-                    let max = req.query.max || 100
+                    let min = parseInt(req.query.min)  || 0
+                    let max = parseInt(req.query.max) || 100
                     posts = await prisma.posts.findMany({
                         skip: (perPage * page) - perPage,
                         take: perPage, 
-                        where: { price: {
-                        lte: max,
-                        gte: min
-                    }},
+                        where: { AND: [{
+                            OR: [{
+                                title: {contains: req.query.search}
+                            },{
+                                content: {contains: req.query.search}
+                            },
+                        ]
+                        }, {
+                                price: {
+                                lte: max,
+                                gte: min
+                            },
+                        }]
+                 },
                         orderBy: [sort],
                     })
+                    
                 }
                 else {
                     let address = await prisma.address.findMany({
                         skip: (perPage * page) - perPage,
                         take: perPage,
                         where: {
-                        
                         city: {contains: req.query.city},
                         district: {contains: req.query.district},
                         ward: {contains: req.query.ward},
                         street: {contains: req.query.street}
                     }})
-
-                    
                     let idList = []
                     for(var i = 0;i<address.length; ++i){
                         idList.push(address[i].id)
                     }
-
+                    console.log(idList)
                     posts = await prisma.posts.findMany({ where: {
-                        id : { in : idList}
+                        AND: [
+                            {
+                                id : { in : idList},
+                            },
+                            {
+                                OR: [{
+                                    title: {contains: req.query.search}
+                                },{
+                                    content: {contains: req.query.search}
+                                },
+                            ]
+                            }
+                        ]
+                        
                     },
                         orderBy: [sort],
                     })
@@ -127,9 +147,7 @@ class PostsController {
         }
         catch(err){
             res.status(400).send(err)
-
         }
-       
     }
     
     // [POST] api/posts/
@@ -200,139 +218,6 @@ class PostsController {
         }
     }
 
-    // [PUT]/api/posts/:id
-    async updateNoDeleteOldImage(req, res, next){
-        let id = parseInt(req.params.id)
-        // console.log(req.body)
-        let date = new Date()
-        date.setHours(date.getHours()+7)
-        let check = await prisma.posts.findFirst({ where: { id: id }})
-        // console.log(check.created_at.getTime() == check.updated_at.getTime())
-        if (check.created_at.getTime() != check.updated_at.getTime()) { // ktra xem bai viet co ching sua lan nao chua
-            res.status(400).send('This post has been changed before.')
-        }
-        else{
-            let post = await prisma.posts.update({
-                where: {
-                    id: id
-                }, 
-                data: {
-                    title: req.body.title,
-                    content: req.body.content,
-                    price: parseFloat(req.body.price),
-                    phone: req.body.phone,
-                    status: req.body.status,
-                    updated_at: date,
-                    user_id: req.user.id,
-                }
-            })
-            if(post){
-                var array = req.files
-                for(var i =0; i< array.length; ++i){
-                    array[i] = {
-                        image_path: array[i].path,
-                        post_id: post.id
-                    }
-                }
-                console.log('array path',array)
-                let image = await prisma.images.createMany({
-                    data : array
-                })
-                let address = await prisma.address.update({
-                    where:{
-                        id: post.id
-                    }
-                    ,data: {
-                        city: req.body.city,
-                        district: req.body.district,
-                        ward: req.body.ward,
-                        street: req.body.street
-                    }
-                })
-                res.send(post)
-            }
-            else{
-                res.status(400).send('No post found!')
-            }
-        }
-        
-    }
-
-
-    // [PUT]/posts/:id/delImgs
-    async updateDeleteOldImage(req, res, next){
-        let id = parseInt(req.params.id)
-        let date = new Date()
-        date.setHours(date.getHours()+7)
-        let check = await prisma.posts.findFirst({ where: { id: id }})
-        if (check.created_at != check.updated_at) { // ktra xem bai viet co chinh sua lan nao chua
-            // xoa anh moi them vao
-            res.status(400).send('This post has been changed before.')
-        }
-        else{
-            let post = await prisma.posts.update({
-                where: {
-                    id: id
-                }, 
-                data: {
-                    title: req.body.title,
-                    content: req.body.content,
-                    price: parseFloat(req.body.price),
-                    phone: req.body.phone,
-                    status: req.body.status,
-                    updated_at: date,
-                    user_id: req.user.id,
-                }
-            })
-            if(post){
-                var array = req.files
-                for(var i =0; i< array.length; ++i){
-                    array[i] = {
-                        image_path: array[i].path,
-                        post_id: post.id
-                    }
-                }
-                // console.log('array path',array)
-                // delete image in local folder
-                let oldImage = await prisma.images.findMany({ where: { post_id: post.id}}) 
-                console.log(oldImage)
-                try {
-                    for(var i =0; i< oldImage.length; ++i){
-                        fs.unlinkSync(oldImage[i].image_path)
-                    }
-                  } catch(err) {
-                    console.error(err)
-                  }
-                res.send(post)
-    
-                // delete record in DB
-                let deleteImg = await prisma.images.deleteMany({ where: { post_id: post.id}})
-    
-                // create new record
-                let image = await prisma.images.createMany({
-                    data : array
-                })
-                // update new address
-                let address = await prisma.address.update({
-                    where:{
-                        id: post.id
-                    }
-                    ,data: {
-                        city: req.body.city,
-                        district: req.body.district,
-                        ward: req.body.ward,
-                        street: req.body.street
-                    }
-                })
-                
-            }
-            else{
-                res.status(400).send('No post found!')
-            }
-        }
-        
-        
-    }
 
     // [PUT] /api/:id/
     async updatePost(req, res, next){
@@ -371,7 +256,6 @@ class PostsController {
                 if(post){
                     // delete image in local folder
                     let delList =[]
-                    // console.log(req.body.delList.length)
     
                     if(typeof(req.body.delList)=='string'){
                         delList = new Array(req.body.delList) 
@@ -379,6 +263,7 @@ class PostsController {
                     else{
                         delList = req.body.delList
                     }
+                    console.log(delList)
                     try {
                             for(var i =0; i< delList.length; ++i){
                                 fs.unlinkSync(delList[i])
