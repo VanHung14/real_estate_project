@@ -1,44 +1,18 @@
 const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')
-var multer = require('multer')
-
-var storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'src\\public\\post_img')
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-'+ file.originalname)
-        // cb(null, file.fieldname + '-' + Date.now() + file.originalname.match(/\..*$/)[0])
-    }
-    
-});
-
-var upload = multer({ 
-    storage,
-    limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") 
-        {
-            cb(null, true);
-        } else {
-            cb(null, false);
-            const err = new Error('Only .png, .jpg and .jpeg format allowed!')
-            err.name = 'ExtensionError'
-            return cb(err);
-        }
-    }, });  
-var type = upload.array('images', 5);
+const upload = require('../middleware/upload')
 
 const postsController = require('../controllers/PostsController')
 
+var uploadFile = upload.array('images', 10);
 
-router.post('/', [type, auth] , postsController.create)
+router.post('/', [uploadFile, auth] , postsController.create)
 router.get('/', auth , postsController.getPosts)
-// router.get('/sort', auth , postsController.sort)
-// router.get('/filter', auth , postsController.filter)
-router.get('/detail/:id', auth , postsController.detailPost)
-router.put('/updateNoDel/:id',[type, auth], postsController.updateNoDeleteOldImage)
-router.put('/updateDelOldImg/:id',[type, auth], postsController.updateDeleteOldImage)
+router.get('/:id', auth , postsController.getPostById)
+// router.put('/:id',[uploadFile, auth], postsController.updateNoDeleteOldImage)
+// router.put('/:id/delImgs',[uploadFile, auth], postsController.updateDeleteOldImage)
+router.put('/:id',[uploadFile, auth], postsController.updatePost)
+
 
 module.exports = router

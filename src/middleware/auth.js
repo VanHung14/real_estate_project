@@ -3,6 +3,8 @@
 // let app = express()
 // app.use(cookieParser());
 const utils = require('../utils/utils')
+const fs = require('fs')
+
 
 // const jwt = require('jsonwebtoken')
 const config = require('../configs/config')
@@ -16,6 +18,16 @@ module.exports = async function (req, res, next){
       next()
     }
     catch (err) {
+      if(req.files != undefined){
+        try { // xoa file o trong folder khi sai token
+          var array = req.files
+          for(var i =0; i< array.length; ++i){
+              fs.unlinkSync(array[i].path)
+          }
+        } catch(err) {
+          console.error(err)
+        }
+      }
       console.error(err);
       return res.status(401).json({
         message: 'Unauthorized access.',
