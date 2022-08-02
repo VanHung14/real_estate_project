@@ -14,7 +14,7 @@ var tokenList = {}
 class UsersController {
 
     // [GET] /api/users/:role/list
-    async getListUser(req, res, next){
+    async getListUserByRoleId(req, res, next){
         try{
             let rold_id = parseInt(req.params.role)
             if(req.user.role_id == 1){
@@ -60,25 +60,33 @@ class UsersController {
     }
 
     // [PATCH] /api/users/:id
-    // Only works for mysellf, or admin 
+    // Only works for myself, or admin 
     async updateUser (req, res, next){
         try{
             let id = parseInt(req.params.id)
-            let password = req.body.password || '123456'
-            if(id == req.user.id || req.user.rold_id == 1){
-                
-                let date = new Date()
-                date.setHours(date.getHours()+7)
-                const salt = await bcrypt.genSalt(10)   
-                let update = await prisma.users.update({where: {
-                    id: id,
-                },
-                data : {
+            let data = {}
+            let date = new Date()
+            date.setHours(date.getHours()+7)
+            const salt = await bcrypt.genSalt(10)   
+            if(req.body.password != undefined && req.body.password != ''){
+                data = {
                     full_name: req.body.full_name,
-                    password: await bcrypt.hash(password, salt),
+                    password: await bcrypt.hash(req.body.password, salt),
                     phone: req.body.phone,
                     updated_at: date
                 }
+            } else {
+                data = {
+                    full_name: req.body.full_name,
+                    phone: req.body.phone,
+                    updated_at: date
+                }
+            }
+            if(id == req.user.id || req.user.rold_id == 1){
+                let update = await prisma.users.update({where: {
+                    id: id,
+                },
+                data
             })
                 if(update) {
                     res.send(update)
@@ -96,7 +104,50 @@ class UsersController {
         }
     }
 
-    
+    // [DELETE] /api/users/:id
+    async deleteUser(req, res, next) {
+        try {
+            let id = parseInt(req.params.id)  
+            if(req.user.role_id == 1){
+                let posts = await prisma.posts.findMany({where: { user_id: id}})
+                if(posts){
+                    let postId = []
+                    for(var i=0; i<posts.length; ++i){
+                        postId.push(posts[i].id)
+                    }
+                    let delAddress = await prisma.address.deleteMany({where: { id: {in: postId}}})
+                    let delImg = await prisma.images.deleteMany({where: { post_id: {in: postId}}})
+                    let delPost = await prisma.posts.deleteMany({where: { user_id: id}})
+                    let delCmt = await prisma.comments.deleteMany({where : { user_id: id }})
+                }
+                let delUser = await prisma.users.delete({where : { id: id }})   
+                if(delUser){
+                    let delReview = await prisma.reviews.deleteMany({where : { buyer_id: id }})
+                    let delMessage = await prisma.messages.deleteMany({where : {
+                        OR: [ {
+                            sender_id: id
+                        }, {
+                            receive_id: id
+                        }]
+                    }})
+                    res.send(delUser)
+                }
+                else{
+                    res.status(404).send('Delete user failed!')
+                }
+                
+                
+            }
+            else{
+                res.status(403).send('No permission! Only works for admin accounts')
+            }
+
+        }
+        catch(err) 
+        {
+            res.status(400).send(err)
+        }
+    }
 
     // [POST]/api/users/login
     async login(req, res){
@@ -126,7 +177,6 @@ class UsersController {
             res.status(400).send(err)
         }
     }
-
 
     // [POST]/api/users/refresh-token
     async refreshToken (req, res) {
@@ -246,7 +296,7 @@ class UsersController {
         var token = req.body.token;
         var password = req.body.password;
         const salt = await bcrypt.genSalt(10)
-
+        
         let user = await prisma.users.findFirst({where: {
             reset_password_token: token,
         }})
