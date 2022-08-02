@@ -12,6 +12,92 @@ const config = require('../configs/config');
 
 var tokenList = {}
 class UsersController {
+
+    // [GET] /api/users/:role/list
+    async getListUser(req, res, next){
+        try{
+            let rold_id = parseInt(req.params.role)
+            if(req.user.role_id == 1){
+                
+                let seller = await prisma.users.findMany({where:
+                    {
+                        role_id: rold_id
+                    }})
+                    
+                if(seller) {
+                    res.send(seller)
+                }
+                else{
+                    res.status(404).send('No seller found!')
+                }
+            }
+            else{
+                res.status(403).send('No permision! Only works for admin')
+            }
+        }
+        catch(err){
+            res.status(400).send(err)
+        }
+    }
+
+    // [GET] /api/users/:id
+    async getUserById(req, res, next){
+        try {
+            let id = parseInt(req.params.id)
+            let user = await prisma.users.findFirst({where: {
+                id: id
+            }})
+            if(user){
+                res.send(user)
+            }
+            else{
+                res.status(404).send('No user found!')
+            }
+        }
+        catch(err){
+            res.status(400).send(err)
+        }
+    }
+
+    // [PATCH] /api/users/:id
+    // Only works for mysellf, or admin 
+    async updateUser (req, res, next){
+        try{
+            let id = parseInt(req.params.id)
+            let password = req.body.password || '123456'
+            if(id == req.user.id || req.user.rold_id == 1){
+                
+                let date = new Date()
+                date.setHours(date.getHours()+7)
+                const salt = await bcrypt.genSalt(10)   
+                let update = await prisma.users.update({where: {
+                    id: id,
+                },
+                data : {
+                    full_name: req.body.full_name,
+                    password: await bcrypt.hash(password, salt),
+                    phone: req.body.phone,
+                    updated_at: date
+                }
+            })
+                if(update) {
+                    res.send(update)
+                }
+                else{   
+                    res.status(404).send('Update user failed!')
+                }
+            }
+            else{
+                res.status(403).send('No permission! Only works with users who own this comment, or admin')
+            }
+        }
+        catch(err){
+            res.status(400).send(err)
+        }
+    }
+
+    
+
     // [POST]/api/users/login
     async login(req, res){
         try {
@@ -168,7 +254,6 @@ class UsersController {
             let date = new Date()
             date.setHours(date.getHours()+7)
             let update = await prisma.users.update({
-                
                 where: {
                     email: user.email
                 },
@@ -188,8 +273,6 @@ class UsersController {
         else{
             res.status(400).send('No user found!')
         }
-        
-
     }
 }
 
