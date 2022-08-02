@@ -118,7 +118,9 @@ class UsersController {
                     let delAddress = await prisma.address.deleteMany({where: { id: {in: postId}}})
                     let delImg = await prisma.images.deleteMany({where: { post_id: {in: postId}}})
                     let delPost = await prisma.posts.deleteMany({where: { user_id: id}})
-                    let delCmt = await prisma.comments.deleteMany({where : { user_id: id }})
+                    let delCmt = await prisma.comments.deleteMany({where :{
+                        OR :[{ user_id: id }, { post_id: {in: postId} }]
+                    } })
                 }
                 let delUser = await prisma.users.delete({where : { id: id }})   
                 if(delUser){
@@ -135,8 +137,6 @@ class UsersController {
                 else{
                     res.status(404).send('Delete user failed!')
                 }
-                
-                
             }
             else{
                 res.status(403).send('No permission! Only works for admin accounts')
