@@ -153,64 +153,69 @@ class PostsController {
     // [POST] api/posts/
     async createPost (req, res, next) {
         try{
-            let address = await prisma.address.findFirst({ where :{
-                city: req.body.city,
-                district: req.body.district,
-                ward: req.body.ward,
-                street: req.body.street
-            }})
-            if(address) {
-                try { // xoa file o trong folder khi ko tao them post
-                    var array = req.files
-                    for(var i =0; i< array.length; ++i){
-                        fs.unlinkSync(array[i].path)
-                    }
-                  } catch(err) {
-                    console.error(err)
-                  }
-                res.status(401).send('Address is already created!')
-            }
-            else{
-                let date = new Date()
-                date.setHours(date.getHours()+7)
-                let post = await prisma.posts.create({
-                    data: {
-                    title: req.body.title,
-                    content: req.body.content,
-                    price: parseFloat(req.body.price),
-                    phone: req.body.phone,
-                    status: req.body.status,
-                    created_at: date,
-                    updated_at: date,
-                    user_id: req.user.id,
-                    address: {
-                        create: {
-                        city: req.body.city,
-                        district: req.body.district,
-                        ward: req.body.ward,
-                        street: req.body.street
+            if(req.user.role_id != 2) {
+                let address = await prisma.address.findFirst({ where :{
+                    city: req.body.city,
+                    district: req.body.district,
+                    ward: req.body.ward,
+                    street: req.body.street
+                }})
+                if(address) {
+                    try { // xoa file o trong folder khi ko tao them post
+                        var array = req.files
+                        for(var i =0; i< array.length; ++i){
+                            fs.unlinkSync(array[i].path)
                         }
-                    },
-                    }
-                })
-    
-                if(post){
-                    var array = req.files
-                    for(var i =0; i< array.length; ++i){
-                        array[i] = {    
-                            image_path: array[i].path,
-                            post_id: post.id
-                        }
-                    }
-                    let image = await prisma.images.createMany({
-                        data : array
-                    })
-                    
-                    res.send(post)
+                      } catch(err) {
+                        console.error(err)
+                      }
+                    res.status(401).send('Address is already created!')
                 }
                 else{
-                    res.status(400).send('Post failed!')
+                    let date = new Date()
+                    date.setHours(date.getHours()+7)
+                    let post = await prisma.posts.create({
+                        data: {
+                        title: req.body.title,
+                        content: req.body.content,
+                        price: parseFloat(req.body.price),
+                        phone: req.body.phone,
+                        status: req.body.status,
+                        created_at: date,
+                        updated_at: date,
+                        user_id: req.user.id,
+                        address: {
+                            create: {
+                            city: req.body.city,
+                            district: req.body.district,
+                            ward: req.body.ward,
+                            street: req.body.street
+                            }
+                        },
+                        }
+                    })
+        
+                    if(post){
+                        var array = req.files
+                        for(var i =0; i< array.length; ++i){
+                            array[i] = {    
+                                image_path: array[i].path,
+                                post_id: post.id
+                            }
+                        }
+                        let image = await prisma.images.createMany({
+                            data : array
+                        })
+                        
+                        res.send(post)
+                    }
+                    else{
+                        res.status(400).send('Post failed!')
+                    }
                 }
+            }
+            else{
+                res.status(403).send('No permission! Create post only works for seller.')
             }
         }
         catch(err){
