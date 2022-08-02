@@ -60,6 +60,8 @@ model Comments {
   post Posts @relation(fields: [post_id], references: [id])
   post_id Int 
   comment String @db.VarChar(500)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 }
 
 model Messages {
@@ -78,6 +80,8 @@ model Reviews {
   seller_id Int
   review String? @db.VarChar(500)
   rating Float
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 }
 
 model Address {
