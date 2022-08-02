@@ -219,7 +219,7 @@ class PostsController {
     }
 
 
-    // [PUT] /api/:id/
+    // [PATCH] /api/:id/
     async updatePost(req, res, next){
         try{
             let id = parseInt(req.params.id)
