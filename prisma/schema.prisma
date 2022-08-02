@@ -69,7 +69,7 @@ model Messages {
   sender_id Int
   receive_id Int
   message String? @db.VarChar(500)
-  status String?
+  status String? 
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 }

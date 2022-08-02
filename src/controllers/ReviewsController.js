@@ -41,6 +41,7 @@ class ReviewsController{
             res.status(400).send(err)
         }
     }
+
     // [GET] /api/reviews/       
     // GET all reviews (have pagination)
     // Only works for admin
@@ -109,7 +110,6 @@ class ReviewsController{
             res.status(400).send(err)
         }
     }
-
 
     // [DELETE] /api/reviews/:id
     // Only works with users who own this review, or admin
