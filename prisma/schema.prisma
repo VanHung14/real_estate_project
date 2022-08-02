@@ -76,7 +76,7 @@ model Messages {
 
 model Reviews {
   id Int @id @default(autoincrement())
-  user_id Int
+  buyer_id Int
   seller_id Int
   review String? @db.VarChar(500)
   rating Float

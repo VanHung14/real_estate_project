@@ -19,7 +19,7 @@ class CommentsController {
                 }
             })
             if(comment) {
-                res.send(comment)
+                res.status(201).send(comment)
             }
             else{
                 res.status(400).send('Comment failed!')
@@ -30,32 +30,39 @@ class CommentsController {
         }
     }
 
-    // [PUT] /api/comments/:id
+    // [PATCH] /api/comments/:id  
+    // Only works with users who own this comment
     async updateComment(req, res, next){
         try{
             let date = new Date()
             date.setHours(date.getHours()+7)
             let id = parseInt(req.params.id)
             let comment = await prisma.comments.findFirst({ where: { id: id}})
-            if(req.user.id != comment.id){
-                res.status(403).send('Not permission!')
-            }
-            else{
-                let update = await prisma.comments.update({
-                    where: {
-                    id: id
-                }, data: {
-                    comment: req.body.comment,
-                    updated_at: date
-                }
-                })
-                if(update) {
-                    res.send(update)
+            if(comment){
+                if(req.user.id != comment.user_id){
+                    res.status(403).send('Not permission! Only works with users who own this comment')
                 }
                 else{
-                    res.status(400).send('Update comment failed!    ')
+                    let update = await prisma.comments.update({
+                        where: {
+                        id: id
+                    }, data: {
+                        comment: req.body.comment,
+                        updated_at: date
+                    }
+                    })
+                    if(update) {
+                        res.send(update)
+                    }
+                    else{
+                        res.status(400).send('Update comment failed!')
+                    }
                 }
             }
+            else{ 
+                res.status(404).send('No comment found!')
+            }
+            
             
         }
         catch(err){
@@ -63,8 +70,10 @@ class CommentsController {
         }
     }
 
-    // [GET] /api/comments/
-    async getComments(req, res, next) {
+    // [GET] /api/comments/       
+    // GET all comments (have pagination)
+    // Only works for admin
+    async getComments(req, res, next) { 
         try{
             if(req.user.role_id == 1){
                 let perPage = 50
@@ -91,14 +100,12 @@ class CommentsController {
     }
 
     // [DELETE] /api/comments/:id
+    // Only works with users who own this comment, or admin
     async deleteComment(req, res, next) {
         try{
             let id = parseInt(req.params.id)
             let comment = await prisma.comments.findFirst({ where: { id: id}})
-            if(req.user.id != comment.id){
-                res.status(403).send('Not permission!')
-            }
-            else{
+            if(req.user.id == comment.user_id || req.user.role_id == 1 ){
                 let delCmt = await prisma.comments.delete({ where: { id: id}})
                 if(delCmt){
                     res.send(delCmt)
@@ -106,6 +113,9 @@ class CommentsController {
                 else {
                     res.status(400).send('Delete comment failed!')
                 }
+            }
+            else{
+                res.status(403).send('Not permission! Only works with users who own this comment, or admin')
             }
         }
         catch(err){
