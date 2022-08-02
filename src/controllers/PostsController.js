@@ -91,7 +91,7 @@ class PostsController {
                             {
                                 OR: [{
                                     title: {contains: req.query.search}
-                                },{
+                                },{ 
                                     content: {contains: req.query.search}
                                 },
                             ]
@@ -151,7 +151,7 @@ class PostsController {
     }
     
     // [POST] api/posts/
-    async create (req, res, next) {
+    async createPost (req, res, next) {
         try{
             let address = await prisma.address.findFirst({ where :{
                 city: req.body.city,
@@ -324,7 +324,7 @@ class PostsController {
             res.status(400).send(err)
         }
     }
-
+    
 }
 
 module.exports = new PostsController;

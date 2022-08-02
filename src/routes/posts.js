@@ -7,7 +7,7 @@ const postsController = require('../controllers/PostsController')
 
 var uploadFile = upload.array('images', 10);
 
-router.post('/', [uploadFile, auth] , postsController.create)
+router.post('/', [uploadFile, auth] , postsController.createPost)
 router.get('/', auth , postsController.getPosts)
 router.get('/:id', auth , postsController.getPostById)
 router.put('/:id',[uploadFile, auth], postsController.updatePost)
