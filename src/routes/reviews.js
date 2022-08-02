@@ -9,6 +9,4 @@ router.get('/', auth , reviewsController.getReviews)
 router.patch('/:id',[ auth], reviewsController.updateReview)
 router.delete('/:id', auth , reviewsController.deleteReview)
 
-
-
 module.exports = router
