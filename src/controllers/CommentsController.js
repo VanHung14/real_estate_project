@@ -39,10 +39,7 @@ class CommentsController {
             let id = parseInt(req.params.id)
             let comment = await prisma.comments.findFirst({ where: { id: id}})
             if(comment){
-                if(req.user.id != comment.user_id){
-                    res.status(403).send('Not permission! Only works with users who own this comment')
-                }
-                else{
+                if(req.user.id == comment.user_id){
                     let update = await prisma.comments.update({
                         where: {
                         id: id
@@ -57,6 +54,10 @@ class CommentsController {
                     else{
                         res.status(400).send('Update comment failed!')
                     }
+                    
+                }
+                else{
+                    res.status(403).send('Not permission! Only works with users who own this comment')
                 }
             }
             else{ 
@@ -70,18 +71,25 @@ class CommentsController {
         }
     }
 
-    // [GET] /api/comments/       
-    // GET all comments (have pagination)
-    // Only works for admin
+    // [GET] /api/comments?page=&postId=       
+    // GET all comments (have pagination), only works for admin
+    // GET comment by id works for all role.
     async getComments(req, res, next) { 
         try{
-            if(req.user.role_id == 1){
-                let perPage = 50
-                let page = parseInt(req.query.page) || 1
-                let comments = await prisma.comments.findMany({
-                    skip: (perPage * page) - perPage,
-                    take: perPage,
-                })
+            let postId = parseInt(req.query.postId)
+            let perPage = 50
+            let page = parseInt(req.query.page) || 1
+            let data = {
+                skip: (perPage * page) - perPage,
+                take: perPage,
+            }
+            if(Number.isInteger(postId)){
+                data["where"] = { post_id: postId}
+            }
+            console.log('data', data)
+            let comments = await prisma.comments.findMany(data)
+            console.log(comments)
+            if(Number.isInteger(postId)){
                 if(comments) {
                     res.send(comments)
                 }
@@ -90,9 +98,13 @@ class CommentsController {
                 }
             }
             else{
-                res.status(403).send('No permission! Only admin can get comments.')
+                if(req.user.role_id == 1 && comments){
+                    res.send(comments)
+                }
+                else{
+                    res.status(403).send('No permission! Only admin can get comments.')
+                }
             }
-            
         }
         catch(err){
             res.status(400).send(err)

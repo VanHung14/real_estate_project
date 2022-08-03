@@ -8,6 +8,8 @@ const randtoken = require('rand-token')
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
 const config = require('../configs/config');
+const fs = require('fs')
+
 
 
 var tokenList = {}
@@ -46,7 +48,7 @@ class UsersController {
     async getUserById(req, res, next){
         try {
             let id = parseInt(req.params.id)
-            if(req.user.role_id == 1 || req.user.id == id){
+            if(req.user.role_id == 1 || req.user.id == id ){
                 let user = await prisma.users.findFirst({where: {
                     id: id
                 }})
@@ -99,7 +101,7 @@ class UsersController {
                 if(update) {
                     res.send(update)
                 }
-                else{   
+                else{
                     res.status(404).send('Update user failed!')
                 }
             }
@@ -129,17 +131,12 @@ class UsersController {
                     delList.push(imgPath[i].image_path)
                 }
                 console.log(delList)
-                if(JSON.stringify(delList) == JSON.stringify([])){
-                    try {
-                        for(var i =0; i< delList.length; ++i){ // delete img in local folder
-                            fs.unlinkSync(delList[i])
-                        }
-                        } catch(err) {
-                        console.error(err)
-                        }
-                }
+                
                 let delUser = await prisma.users.delete({where : { id: id }})   
                 if(delUser){
+                    if(JSON.stringify(delList) != JSON.stringify([])){
+                        deleteImgInByPath(delList)
+                    }
                     let delReview = await prisma.reviews.deleteMany({where : { buyer_id: id }})
                     let delMessage = await prisma.messages.deleteMany({where : {
                         OR: [ {
@@ -303,8 +300,8 @@ class UsersController {
 
     //[GET] /users/reset-password?token=
     linkResetPassword(req, res, next){
-        var token = req.query.token
-        console.log(token)
+        // var token = req.query.token
+        // console.log(token)
     }
 
     //[PUT] /api/users/reset-password
@@ -380,4 +377,26 @@ async function sendEmail(email, token) {
         });
     }
     )
+}
+
+async function deleteImgInByReqFiles(array){ // delete by req.files
+    // console.log('array', array)
+    try { // delete files in local folder when not update new images
+        for(var i =0; i< array.length; ++i){
+            fs.unlinkSync(array[i].path)
+        }
+      } catch(err) {
+        console.error(err)
+      }
+}
+
+async function deleteImgInByPath(array){    // delete by path req.body
+    // console.log('array', array)
+    try { // delete files in local folder when not update new images
+        for(var i =0; i< array.length; ++i){
+            fs.unlinkSync(array[i])
+        }
+      } catch(err) {
+        console.error(err)
+      }
 }

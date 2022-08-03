@@ -11,7 +11,7 @@ router.post('/', [uploadFile, auth] , postsController.createPost)
 router.get('/', auth , postsController.getPosts)
 router.get('/:id', auth , postsController.getPostById)
 router.patch('/:id',[uploadFile, auth], postsController.updatePost)
-router.delete('/:id',auth , postsController.deletePost)
+router.delete('/:id', auth , postsController.deletePost)
 
 
 module.exports = router
