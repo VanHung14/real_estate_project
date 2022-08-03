@@ -107,8 +107,9 @@ class UsersController {
     // [DELETE] /api/users/:id
     async deleteUser(req, res, next) {
         try {
-            let id = parseInt(req.params.id)  
+            let id = parseInt(req.params.id)
             if(req.user.role_id == 1){
+                let posts = await prisma.posts.findMany({where: { user_id: id}})
                 let delUser = await prisma.users.delete({where : { id: id }})   
                 if(delUser){
                     let delReview = await prisma.reviews.deleteMany({where : { buyer_id: id }})
@@ -298,7 +299,6 @@ class UsersController {
                     password: await bcrypt.hash(password, salt),
                     updated_at : date
                 }
-                
             })
             if(update) {
                 res.send('Update successful!')

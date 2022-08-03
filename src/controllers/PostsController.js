@@ -153,7 +153,7 @@ class PostsController {
     // [POST] api/posts/
     async createPost (req, res, next) {
         try{
-            if(req.user.role_id != 2) {
+            if(req.user.role_id == 2) {
                 let address = await prisma.address.findFirst({ where :{
                     city: req.body.city,
                     district: req.body.district,
@@ -215,6 +215,14 @@ class PostsController {
                 }
             }
             else{
+                try { // xoa file o trong folder khi ko tao them post
+                    var array = req.files
+                    for(var i =0; i< array.length; ++i){
+                        fs.unlinkSync(array[i].path)
+                    }
+                  } catch(err) {
+                    console.error(err)
+                  }
                 res.status(403).send('No permission! Create post only works for seller.')
             }
         }
@@ -313,23 +321,44 @@ class PostsController {
     }
 
     // [DELETE] /api/posts/:id
+    // Only works with user who own this post, or admin.
     async deletePost(req, res, next){
         try{
             var id = parseInt(req.params.id)
-            let delAddress = await prisma.address.delete({where: {
-                id: id,
-            }})
-            let delPost = await prisma.posts.delete({ where: {
-                id: id,
-            }})
-            res.send(delPost)
+            let post = await prisma.posts.findFirst({where: {id: id}})
+            if(req.user.id == 1 || post.user_id == req.user.id ){
+                let imgPath = await prisma.images.findMany({where: { post_id: id}})
+                let delList =[]
+                for(var i =0; i< imgPath.length; ++i){
+                    delList.push(imgPath[i].image_path)
+                }
+                let delPost = await prisma.posts.delete({ where: {
+                    id: id,
+                }})
+                console.log(delList)
+                if(delPost ){
+                    try {
+                            for(var i =0; i< delList.length; ++i){ // delete img in local folder
+                                fs.unlinkSync(delList[i])
+                            }
+                          } catch(err) {
+                            console.error(err)
+                          }
+                }
+                else{
+                    res.status(404).send('Delete failed!')
+                }
+                res.send(delPost)
+            }
+            else{
+                res.status(403).send('No permission! Only works with user who own this post, or admin.')
+            }
         }
         catch(err)
         {
             res.status(400).send(err)
         }
     }
-    
 }
 
 module.exports = new PostsController;
