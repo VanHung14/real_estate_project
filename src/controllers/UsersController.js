@@ -13,15 +13,16 @@ const config = require('../configs/config');
 var tokenList = {}
 class UsersController {
 
-    // [GET] /api/users/:role/list
+    // [GET] /api/users/:roleId/list
+    // Only works for admin
     async getListUserByRoleId(req, res, next){
         try{
-            let rold_id = parseInt(req.params.role)
+            let role_id = parseInt(req.params.roleId)
             if(req.user.role_id == 1){
                 
                 let seller = await prisma.users.findMany({where:
                     {
-                        role_id: rold_id
+                        role_id: role_id
                     }})
                     
                 if(seller) {
@@ -32,7 +33,7 @@ class UsersController {
                 }
             }
             else{
-                res.status(403).send('No permision! Only works for admin')
+                res.status(403).send('No permision! Only works for admin.')
             }
         }
         catch(err){
@@ -41,18 +42,25 @@ class UsersController {
     }
 
     // [GET] /api/users/:id
+    // Only works for myself, or admin
     async getUserById(req, res, next){
         try {
             let id = parseInt(req.params.id)
-            let user = await prisma.users.findFirst({where: {
-                id: id
-            }})
-            if(user){
-                res.send(user)
+            if(req.user.role_id == 1 || req.user.id == id){
+                let user = await prisma.users.findFirst({where: {
+                    id: id
+                }})
+                if(user){
+                    res.send(user)
+                }
+                else{
+                    res.status(404).send('No user found!')
+                }
             }
-            else{
-                res.status(404).send('No user found!')
+            else{ 
+                res.status(403).send('No permission! Only works for myself, or admin')
             }
+           
         }
         catch(err){
             res.status(400).send(err)
@@ -64,30 +72,30 @@ class UsersController {
     async updateUser (req, res, next){
         try{
             let id = parseInt(req.params.id)
-            let data = {}
-            let date = new Date()
-            date.setHours(date.getHours()+7)
-            const salt = await bcrypt.genSalt(10)   
-            if(req.body.password != undefined && req.body.password != ''){
-                data = {
-                    full_name: req.body.full_name,
-                    password: await bcrypt.hash(req.body.password, salt),
-                    phone: req.body.phone,
-                    updated_at: date
+            if(req.user.id == 1 || req.user.id == id){
+                let data = {}
+                let date = new Date()
+                date.setHours(date.getHours()+7)        // set up time in VN
+                const salt = await bcrypt.genSalt(10)   
+                if(req.body.password != undefined && req.body.password != ''){
+                    data = {
+                        full_name: req.body.full_name,
+                        password: await bcrypt.hash(req.body.password, salt),
+                        phone: req.body.phone,
+                        updated_at: date,
+                        role_id: req.body.role
+                    }
+                } else {
+                    data = {
+                        full_name: req.body.full_name,
+                        phone: req.body.phone,
+                        updated_at: date,
+                        role_id: req.body.role
+                    }
                 }
-            } else {
-                data = {
-                    full_name: req.body.full_name,
-                    phone: req.body.phone,
-                    updated_at: date
-                }
-            }
-            if(id == req.user.id || req.user.rold_id == 1){
                 let update = await prisma.users.update({where: {
                     id: id,
-                },
-                data
-            })
+                }, data })
                 if(update) {
                     res.send(update)
                 }
@@ -96,7 +104,7 @@ class UsersController {
                 }
             }
             else{
-                res.status(403).send('No permission! Only works with users who own this comment, or admin')
+                res.status(403).send('No permission! Only works for myself, or admin ')
             }
         }
         catch(err){
@@ -105,11 +113,31 @@ class UsersController {
     }
 
     // [DELETE] /api/users/:id
+    // Only works for admin.
     async deleteUser(req, res, next) {
         try {
             let id = parseInt(req.params.id)
             if(req.user.role_id == 1){
                 let posts = await prisma.posts.findMany({where: { user_id: id}})
+                let postIds = []
+                for(var i = 0; i<posts.length; ++i){
+                    postIds = posts[i].id
+                }
+                let imgPath = await prisma.images.findMany({where: { post_id: { in: postIds }}})
+                let delList =[]
+                for(var i =0; i< imgPath.length; ++i){
+                    delList.push(imgPath[i].image_path)
+                }
+                console.log(delList)
+                if(JSON.stringify(delList) == JSON.stringify([])){
+                    try {
+                        for(var i =0; i< delList.length; ++i){ // delete img in local folder
+                            fs.unlinkSync(delList[i])
+                        }
+                        } catch(err) {
+                        console.error(err)
+                        }
+                }
                 let delUser = await prisma.users.delete({where : { id: id }})   
                 if(delUser){
                     let delReview = await prisma.reviews.deleteMany({where : { buyer_id: id }})
