@@ -5,7 +5,7 @@ class MessagesController {
     // [POST] /api/messages/
     async createMessage(req, res, next) {
         try{
-            console.log(req.body, req.user)
+            // console.log(req.body, req.user)
             let date = new Date()
             date.setHours(date.getHours()+7)
             let message = await prisma.messages.create({
