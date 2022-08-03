@@ -19,8 +19,8 @@ model Users {
   email String @unique
   password String
   phone String? 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
   reset_password_token String?
   role Roles @relation(fields: [role_id], references: [id])
   role_id Int 
@@ -70,8 +70,8 @@ model Messages {
   receive_id Int
   message String? @db.VarChar(500)
   status String? 
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 }
 
 model Reviews {
