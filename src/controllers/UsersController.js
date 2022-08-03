@@ -109,17 +109,6 @@ class UsersController {
         try {
             let id = parseInt(req.params.id)  
             if(req.user.role_id == 1){
-                let posts = await prisma.posts.findMany({where: { user_id: id}})
-                if(posts){
-                    let postId = []
-                    for(var i=0; i<posts.length; ++i){
-                        postId.push(posts[i].id)
-                    }
-                    let delAddress = await prisma.address.deleteMany({where: { id: {in: postId}}})
-                    let delImg = await prisma.images.deleteMany({where: { post_id: {in: postId}}})
-                    let delPost = await prisma.posts.deleteMany({where: { user_id: id}})
-                    let delCmt = await prisma.comments.deleteMany({where : { user_id: id }})
-                }
                 let delUser = await prisma.users.delete({where : { id: id }})   
                 if(delUser){
                     let delReview = await prisma.reviews.deleteMany({where : { buyer_id: id }})
@@ -135,8 +124,6 @@ class UsersController {
                 else{
                     res.status(404).send('Delete user failed!')
                 }
-                
-                
             }
             else{
                 res.status(403).send('No permission! Only works for admin accounts')
