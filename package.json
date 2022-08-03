@@ -28,6 +28,8 @@
     "pagination": "^0.4.6",
     "rand-token": "^1.0.1",
     "smtp": "^0.1.4",
+    "swagger-jsdoc": "^6.2.2",
+    "swagger-ui-express": "^4.5.0",
     "validate-phone-number-node-js": "^0.0.1"
   }
 }
