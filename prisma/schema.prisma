@@ -38,7 +38,7 @@ model Posts {
   updated_at DateTime? @default(now())
   views Int? @default(0)
   status String?
-  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user_id Int 
   images Images[]
   comments Comments[]
@@ -49,15 +49,15 @@ model Posts {
 model Images {
   id Int @id @default(autoincrement())
   image_path String?
-  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   post_id Int
 }
 
 model Comments {
   id Int @id @default(autoincrement())
-  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user_id Int 
-  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   post_id Int 
   comment String @db.VarChar(500)
   created_at DateTime? @default(now())
@@ -90,7 +90,7 @@ model Address {
   district String?
   ward String?
   street String?
-  post Posts @relation(fields: [id], references: [id], onDelete: Cascade)
+  post Posts @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 
