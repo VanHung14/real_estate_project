@@ -239,9 +239,9 @@ class PostsController {
             let date = new Date()
             date.setHours(date.getHours()+7)
             let check = await prisma.posts.findFirst({ where: { id: id }})
-            if (check.created_at.getTime() != check.updated_at.getTime()) { // ktra xem bai viet co chinh sua lan nao chua
+            if (check.created_at.getTime() != check.updated_at.getTime()) { // check if this post had been changed before?
             // if(false){
-                try { // xoa file o trong folder khi ko tao them post
+                try { // delete files in local folder when not update new images
                     var array = req.files
                     for(var i =0; i< array.length; ++i){
                         fs.unlinkSync(array[i].path)
@@ -249,7 +249,7 @@ class PostsController {
                   } catch(err) {
                     console.error(err)
                   }
-                res.status(400).send('This post has been changed before.')
+                res.status(400).send('This post had been changed before.')
             }
             else{
                 let post = await prisma.posts.update({
@@ -270,13 +270,13 @@ class PostsController {
                     // delete image in local folder
                     let delList =[]
     
-                    if(typeof(req.body.delList)=='string'){
+                    if(typeof(req.body.delList)=='string'){ 
                         delList = new Array(req.body.delList) 
                     }
                     else{
                         delList = req.body.delList
                     }
-                    console.log(delList)
+                    // console.log(delList)
                     try {
                             for(var i =0; i< delList.length; ++i){
                                 fs.unlinkSync(delList[i])
@@ -285,7 +285,7 @@ class PostsController {
                             console.error(err)
                           }
                     // delete record in DB
-                    let deleteImg = await prisma.images.deleteMany({ where:{ image_path :{ in : req.body.delList}}})
+                    let deleteImg = await prisma.images.deleteMany({ where:{ image_path :{ in : delList}}})
     
                     var array = req.files
                     for(var i =0; i< array.length; ++i){
