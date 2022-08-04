@@ -169,6 +169,7 @@ class UsersController {
             if(user) {
                 const validPassword = await bcrypt.compare(req.body.password, user.password)
                 if(validPassword) {
+
                     const token = jwt.sign(user, config.secret, { expiresIn: config.tokenLife, })
                     const refreshToken = jwt.sign(user, config.refreshTokenSecret, { expiresIn: config.refreshTokenLife })
                     tokenList[refreshToken] = user;
@@ -177,6 +178,7 @@ class UsersController {
                         refreshToken,
                       }
                       res.json(response);
+                    
                 } 
                 else {
                     res.status(400).send('Invalid password!')
@@ -271,7 +273,7 @@ class UsersController {
     // [POST] /api/users/forgot-password
     async forgotPassword(req, res, next){
         var email = req.body.email;
-        var phone = req.body.phone;
+        var phone = req.body.phone || "";
         let user = await prisma.users.findFirst({where: {
             email: email,
             phone: phone
@@ -287,7 +289,7 @@ class UsersController {
                     email: email,
                     },
                     data})
-                res.send('Send email successful! Token: '+ token)
+                res.send('Send email successful! resetPassToken: '+ token)
             }
             else{
                 res.send('Send email failed!')
@@ -304,9 +306,9 @@ class UsersController {
         // console.log(token)
     }
 
-    //[PUT] /api/users/reset-password
-    async resetPassword(req, res, next){    
-        var token = req.body.token;
+    //[PATCH] /api/users/reset-password
+    async resetPassword(req, res, next){  
+        var token = req.body.resetPassToken;
         var password = req.body.password;
         const salt = await bcrypt.genSalt(10)
         
@@ -326,7 +328,7 @@ class UsersController {
                 }
             })
             if(update) {
-                res.send('Update successful!')
+                res.send(update)
             }
             else{
                 res.status(400).send('Update failed!')
