@@ -25,7 +25,9 @@ class UsersController {
                 let seller = await prisma.users.findMany({where:
                     {
                         role_id: role_id
-                    }})
+                    }
+                },
+                    )
                     
                 if(seller) {
                     res.send(seller)
@@ -69,31 +71,34 @@ class UsersController {
         }
     }
 
+    
+
     // [PATCH] /api/users/:id
     // Only works for myself, or admin 
     async updateUser (req, res, next){
         try{
+            const salt = await bcrypt.genSalt(10)   
+            let full_name = req.body.full_name || undefined
+            let password 
+            if(req.body.password!=''){
+                password = await bcrypt.hash(req.body.password, salt)
+            } 
+            else{
+                password = undefined
+            }
+            let phone = req.body.phone || undefined
+            let role_id = parseInt(req.body.role_id)  || undefined
             let id = parseInt(req.params.id)
             if(req.user.id == 1 || req.user.id == id){
                 let data = {}
                 let date = new Date()
                 date.setHours(date.getHours()+7)        // set up time in VN
-                const salt = await bcrypt.genSalt(10)   
-                if(req.body.password != undefined && req.body.password != ''){
-                    data = {
-                        full_name: req.body.full_name,
-                        password: await bcrypt.hash(req.body.password, salt),
-                        phone: req.body.phone,
-                        updated_at: date,
-                        role_id: req.body.role
-                    }
-                } else {
-                    data = {
-                        full_name: req.body.full_name,
-                        phone: req.body.phone,
-                        updated_at: date,
-                        role_id: req.body.role
-                    }
+                data = {
+                    full_name: full_name,
+                    password: password,
+                    phone: phone,
+                    updated_at: date,
+                    role_id: role_id
                 }
                 let update = await prisma.users.update({where: {
                     id: id,
@@ -164,6 +169,8 @@ class UsersController {
 
     // [POST]/api/users/login
     async login(req, res){
+        console.log(req.body.email)
+        console.log(req.body.password)
         try {
             let user =  await prisma.users.findFirst( {where: { email: req.body.email} })
             if(user) {
@@ -224,6 +231,7 @@ class UsersController {
 
     // [POST] /api/users
     async register(req, res) {
+        console.log(req.body)
         try{
             let user = await prisma.users.findFirst( {where: {  OR: [
                 { AND: { email : req.body.email} },
@@ -246,7 +254,7 @@ class UsersController {
                                 email: req.body.email,
                                 password: await bcrypt.hash(req.body.password, salt),
                                 phone: req.body.phone,
-                                role_id: req.body.role_id,
+                                role_id: parseInt(req.body.role_id) ,
                                 created_at: date,
                                 updated_at: date
                             }
@@ -296,7 +304,7 @@ class UsersController {
             }
         }
         else{
-            res.status(400).send('No user founded!')
+            res.status(404).send('No user founded!')
         }
     }
 

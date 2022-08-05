@@ -1,5 +1,9 @@
 {
-    "swagger": "2.0",
+  "openapi": "3.0.3",
+    "servers": [{
+      "url": "http://localhost:3000/api"
+
+    }],
     "info": {
       "version": "1.0.0", 
       "title": "My User Project CRUD",
@@ -9,8 +13,9 @@
         "url": "https://opensource.org/licenses/MIT"
       }
     },
-    "host": "localhost:3000",
-    "basePath": "/api/",
+    "host":"localhost:3000/",
+    "basePath": "api",
+    
     "tags": [
       {
         "name": "Users",
@@ -29,34 +34,32 @@
             "tags": ["Users"],
             "summary": "Register user",
             "description": "Register user",
-            "parameters": [
-              {
-                "name": "user",
-                "in": "body",
-                "description": "User that we want to create",
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                      "full_name": {
-                        "type": "string"
-                      },
-                      "email": {
-                        "type": "string",
-                        "uniqueItems": true
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                        "email": {
+                            "type": "string"
                         },
-                      "password": {
-                        "type": "string"
-                      },
-                      "phone": {
-                        "type": "string"
-                          },
-                      "role_id": {
-                          "type": "integer"
-                      }
+                        "password": {
+                            "type": "string"
+                        },
+                        "full_name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "role_id": {
+                          "type": "string"
+                        }
+                    }
                   }
                 }
               }
-            ],
+            },
             "produces": ["application/json"],
             "responses": {
               "200": {
@@ -72,24 +75,24 @@
         "post": {
           "tags": ["Users"],
           "summary": "Login",
-          "parameters": [
-            {
-              "name": "user",
-              "in": "body",
-              "description": "User that we want to create",
-              "schema": {
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string"
-                    },
-                    "password": {
-                        "type": "string"
-                    }
+          "requestBody": {
+            "content": {
+              "application/x-www-form-urlencoded": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                      "email": {
+                          "type": "string"
+                      },
+                      "password": {
+                          "type": "string"
+                      }
+                  }
                 }
               }
             }
-          ],
+          },
+          
           "produces": ["application/json"],
           "responses": {
             "200": {
@@ -144,19 +147,35 @@
             "tags": ["Users"],
             "parameters": [
               {
-                "name": "user",
-                "in": "body",
-                "description": "Only works for myself, or admin",
-                "schema": {
-                  "$ref": "#/definitions/updateUser"
-                }
-              },{
                   "name": "x-access-token",
                   "in": "header",
                   "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
                   "type": "string"
               }
             ],
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "full_name": {
+                        "type": "string"
+                      },
+                      "password": {
+                        "type": "string"
+                      },
+                      "phone": {
+                          "type": "string"
+                      },
+                      "role_id": {
+                        "type": "integer"
+                    }
+                  }
+                  }
+                }
+              }
+            },
             "responses": {
               "200": {
                 "description": "User is updated",
@@ -215,21 +234,20 @@
             "tags": ["Users"],
             "summary": "Refresh token",
             "description": "Refresh token",
-            "parameters": [
-                {
-                  "name": "refreshToken",
-                  "in": "body",
-                  "description": "Refreshtoken string of user that we want to refresh token",
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
                   "schema": {
                     "type": "object",
                     "properties": {
-                        "refreshToken":{
+                        "refreshToken": {
                             "type": "string"
                         }
                     }
                   }
                 }
-              ],
+              }
+            },
             "responses": {
                 "200": {
                   "description": "OK",
@@ -250,25 +268,23 @@
         "tags": ["Users"],
         "summary": "Forgot password token",
         "description": "Server will send to available email link to reset password.",
-        "parameters": [
-            {
-              "name": "email",
-              "in": "body",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
               "schema": {
                 "type": "object",
                 "properties": {
-                    "email":{
-                        "type": "string",
-                        "required": true
+                    "email": {
+                        "type": "string"
                     },
-                    "phone":{
-                      "type": "string",
-                      "required": true
+                    "phone": {
+                      "type": "string"
                   }
                 }
               }
             }
-          ],
+          }
+        },
         "responses": {
             "200": {
               "description": "OK",
@@ -412,10 +428,40 @@
                   "properties":{
                     "images":{
                       "type": "array",
-                      "item": {
+                      "items": {
                         "type": "string",
                         "format": "binary"
                       }
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                      },
+                    "price": {
+                      "type": "number"
+                    },
+                    "phone": {
+                      "type": "string"
+                        },
+                    "status": {
+                        "type": "string"
+                    },
+                    "views": {
+                      "type": "integer"
+                        },
+                    "city": {
+                        "type": "string"
+                    },
+                    "district": {
+                      "type": "string"
+                        },
+                    "ward": {
+                        "type": "string"
+                    },
+                    "street": {
+                      "type": "string"
                     }
                   }
                 }
@@ -425,9 +471,9 @@
           "produces": ["application/json"],
           "responses": {
             "200": {
-              "description": "Register successful",
+              "description": "Create new post successful",
               "schema": {
-                "$ref": "#/definitions/User"
+                "$ref": "#/definitions/Post"
               }
             }
           }
@@ -462,11 +508,127 @@
               }
             }
           }
-        }
-        }
-     
+        },
+        "patch": {
 
-      
+          "summary": "Update post with give ID",
+          "tags": ["Posts"],
+          "parameters": [
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "images":{
+                      "description": "Image list needed to insert",
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "binary"  
+                      }
+                    },
+                    "delList":{
+                      "description": "Image list needed to delete. Import path of name of image",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": ["str1", "str2", "str3"]
+                    },
+                    "title":{
+                      "type": "string"
+                    },
+                    "content":{
+                      "type": "string"
+                    },
+                    "price":{
+                      "type": "integer"
+                    },
+                    "phone":{
+                      "type": "string"
+                    },
+                    "status":{
+                      "type": "string"
+                    },
+                    "city":{
+                      "type": "string"
+                    },
+                    "district":{
+                      "type": "string"
+                    },
+                    "ward":{
+                      "type": "string"
+                    },
+                    "street":{
+                      "type": "string"
+                    }
+                }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "User is updated",
+              "schema": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          }
+        },
+
+       
+        "delete": {
+          "summary": "Delete Post with given ID",
+          "description": "Only works for admin",
+          "tags": ["Posts"],
+          "responses": {
+              "200": {
+              "description": "Post is deleted",
+              "schema": {
+                  "$ref": "#/definitions/Post"
+              }
+              }
+          }
+          }
+        },
+        "/posts/{id}/images":{
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "ID of posts that we want to find",
+              "type": "integer"
+            },
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ]
+        ,
+        "get" :{
+          "tags": ["Posts"],
+          "summary": "Get image path by post id",
+          "description": "Only works for user who own has this posts, or admin",
+          "responses": {
+            "200": {
+              "description": "OK"
+            }
+          }
+        }
+        }
+
     },
       "definitions": {
         "User": {
@@ -509,21 +671,7 @@
           "type": "array",
           "$ref": "#/definitions/User"
         },
-        "updateUser": {
-            "required": ["name", "companies"],
-            "properties": {
-                "full_name": {
-                  "type": "string"
-                },
-                "password": {
-                  "type": "string"
-                },
-                "phone": {
-                    "type": "string"
-                }
-            }
-          }
-        ,"Post": {
+        "Post": {
             "required": ["id", "email", "password", "role_id"],
             "properties": {
               "id": {

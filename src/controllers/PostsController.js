@@ -11,6 +11,7 @@ class PostsController {
 
     // [GET] /api/posts?sort=&direct=&filter=address&city=&district=&ward=
     async getPosts(req, res, next) {
+        console.log(req.query.search)
         try{
             let perPage = 10
             let page = parseInt(req.query.page) || 1
@@ -25,7 +26,7 @@ class PostsController {
                         let address = await prisma.address.findFirst({where: {id : posts[i].id}})
                         posts[i].address = address
                         let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
-                            posts[i].first_image_path= image.image_path
+                        posts[i].first_image_path= image.image_path
                     }
                     res.send(posts)
                 }
@@ -117,6 +118,30 @@ class PostsController {
                 else{
                     res.status(404).send('Not found!')
                 }
+            }
+        }
+        catch(err){
+            res.status(400).send(err)
+        }
+    }
+
+    // [GET]/posts/:id/images
+    async getImagePathsByPostId(req, res, next) {
+        try{
+            let id = parseInt(req.params.id)
+            let imgPaths = await prisma.images.findMany({where: { post_id : id}})
+            let list = []
+            if(imgPaths) {
+                for(var i =0; i< imgPaths.length; ++i){
+                    // let separate = imgPaths[i].image_path.split("\\")
+
+                    list.push(imgPaths[i].image_path)
+                    // console.log(imgPaths[i].image_path)
+                }
+                res.send(list)
+            }
+            else{
+                res.status(404).send('No images found!')
             }
         }
         catch(err){
@@ -222,15 +247,28 @@ class PostsController {
     // [PATCH] /api/:id/
     async updatePost(req, res, next){
         try{
+            let title = req.body.title || undefined
+            let content = req.body.content || undefined
+            let phone = req.body.phone || undefined
+            let status = req.body.status || undefined
+            let price = parseFloat(req.body.price)  || undefined
+            let city = req.body.city  || undefined
+            let district = req.body.district  || undefined
+            let ward = req.body.ward  || undefined
+            let street = req.body.street  || undefined
             let id = parseInt(req.params.id)
+
             let date = new Date()
             date.setHours(date.getHours()+7)
             let checkPost = await prisma.posts.findFirst({ where: { id: id }})
-            if(checkPost){                                                                  // check if post is available
-                if (checkPost.created_at.getTime() != checkPost.updated_at.getTime()) {     // check if this post had been changed before?
-                // if(false){
+            // console.log(checkPost)
+            if(checkPost){                   
+                
+            // check if post is available
+                // if (checkPost.created_at.getTime() != checkPost.updated_at.getTime()) {     // check if this post had been changed before?
+                if(false){
                     // delete files in local folder when not update new images
-                    deleteImgInLocalFolder(req.files)
+                    deleteImgInByReqFiles(req.files)
                     res.status(400).send('This post had been changed before.')
                 }
                 else{
@@ -239,28 +277,30 @@ class PostsController {
                             id: id
                         }, 
                         data: {
-                            title: req.body.title,
-                            content: req.body.content,
-                            price: parseFloat(req.body.price),
-                            phone: req.body.phone,
-                            status: req.body.status,
+                            title: title,
+                            content: content,
+                            price: price,
+                            phone: phone,
+                            status: status,
                             updated_at: date,
                         }
                     })
                     if(post){
                         // delete image in local folder
                         let delList =[]
+                        // console.log(req.body.delList)
                         if(typeof(req.body.delList)=='string'){ 
                             delList = new Array(req.body.delList) 
                         }
                         else{
                             delList = req.body.delList
                         }
-                        // console.log('dellist', delList)
-                        deleteImgInByPath(delList)
+                        console.log(delList)
+                        if(JSON.stringify(delList)!= JSON.stringify([''])){
+                            deleteImgInByFileName(delList)
+                        }
                         // delete record in DB
-                        let deleteImg = await prisma.images.deleteMany({ where:{ image_path :{ in : delList}}})
-        
+                        let deleteImg = await prisma.images.deleteMany({ where:{ image_path : { in: req.body.delList}}})
                         var array = req.files
                         for(var i =0; i< array.length; ++i){
                             array[i] = {
@@ -276,10 +316,10 @@ class PostsController {
                                 id: post.id
                             }
                             ,data: {
-                                city: req.body.city,
-                                district: req.body.district,
-                                ward: req.body.ward,
-                                street: req.body.street
+                                city: city,
+                                district: district,
+                                ward: ward,
+                                street: street
                             }
                         })
                         res.send(post)
@@ -342,8 +382,10 @@ module.exports = new PostsController;
 async function deleteImgInByReqFiles(array){ // delete by req.files
     // console.log('array', array)
     try { // delete files in local folder when not update new images
-        for(var i =0; i< array.length; ++i){
-            fs.unlinkSync(array[i].path)
+        if(array != undefined){
+            for(var i =0; i< array.length; ++i){
+                fs.unlinkSync(array[i].path)
+            }
         }
       } catch(err) {
         console.error(err)
@@ -353,9 +395,24 @@ async function deleteImgInByReqFiles(array){ // delete by req.files
 async function deleteImgInByPath(array){    // delete by path req.body
     // console.log('array', array)
     try { // delete files in local folder when not update new images
+        if(array != undefined){
         for(var i =0; i< array.length; ++i){
             fs.unlinkSync(array[i])
         }
+    }
+      } catch(err) {
+        console.error(err)
+      }
+}
+
+async function deleteImgInByFileName(array){    // delete by path req.body
+    // console.log('array', array)
+    try { // delete files in local folder when not update new images
+        if(array != undefined){
+        for(var i =0; i< array.length; ++i){
+            fs.unlinkSync('src\\public\\post_img\\'+array[i])
+        }
+    }
       } catch(err) {
         console.error(err)
       }
