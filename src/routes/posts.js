@@ -12,6 +12,7 @@ var uploadFile = upload.array('images', 10);
 router.post('/', [uploadFile, auth] , postsController.createPost)
 router.get('/', auth , postsController.getPosts)
 router.get('/:id', auth , postsController.getPostById)
+router.get('/:id/images', auth , postsController.getImagePathsByPostId)
 router.patch('/:id',[uploadFile, auth], postsController.updatePost)
 router.delete('/:id', auth , postsController.deletePost)
 
