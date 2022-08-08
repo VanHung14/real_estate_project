@@ -5,13 +5,13 @@ class MessagesController {
     // [POST] /api/messages/
     async createMessage(req, res, next) {
         try{
-            // console.log(req.body, req.user)
             let date = new Date()
+            let receive_id = parseInt(req.body.receive_id)
             date.setHours(date.getHours()+7)
             let message = await prisma.messages.create({
                 data: {
                     sender_id: req.user.id,
-                    receive_id: req.body.receive_id,
+                    receive_id: receive_id,
                     message: req.body.message,
                     created_at: date,
                     updated_at: date
@@ -30,7 +30,7 @@ class MessagesController {
     }
 
     // [GET] /api/messages/
-    // Only works for admin
+    // Only all messages works for admin
     async getMessages(req, res, next) {
         try{
             if(req.user.role_id == 1){
@@ -56,8 +56,51 @@ class MessagesController {
         }
     }
 
+    // [PATCH] /api/messages/:id  
+    // Only works with users who own this message
+    async updateMessage(req, res, next){
+        try{
+            console.log(req.body)
+            let date = new Date()
+            date.setHours(date.getHours()+7)
+            let id = parseInt(req.params.id)
+            let message = await prisma.messages.findFirst({ where: { id: id}})
+            if(message){
+                if(req.user.id == message.sender_id){
+                    let update = await prisma.messages.update({
+                        where: {
+                        id: id
+                    }, data: {
+                        message: req.body.message,
+                        updated_at: date
+                    }
+                    })
+                    if(update) {
+                        res.send(update)
+                    }
+                    else{
+                        res.status(400).send('Update message failed!')
+                    }
+                    
+                }
+                else{
+                    res.status(403).send('Not permission! Only works with users who own this message')
+                }
+            }
+            else{ 
+                res.status(404).send('No message found!')
+            }
+            
+            
+        }
+        catch(err){
+            res.status(400).send(err)
+        }
+    }
+
     // [GET] /api/messages/:id/chat
-    async getConversation(req, res, next){
+    // Conversation between me and the user hasve this id.
+    async getConversationToOther(req, res, next){
         try {
             let id = parseInt(req.params.id)
             let perPage = 50
@@ -84,6 +127,37 @@ class MessagesController {
             else{
                 res.status(404).send('No conversation found!')
             }
+        }
+        catch(err){
+            res.status(400).send(err)
+        }
+    }
+
+    // [DELETE] /api/messages/:id
+    // Only works with users who own this message, or admin
+    async deleteMessage(req, res, next) {
+        try{
+            
+            let id = parseInt(req.params.id)
+            let message = await prisma.messages.findFirst({ where: { id: id}})  
+            if(message){
+                if(req.user.id == message.sender_id || req.user.role_id == 1 ){
+                    let delMess = await prisma.messages.delete({ where: { id: id}})
+                    if(delMess){
+                        res.send(delMess)
+                    }
+                    else {
+                        res.status(400).send('Delete message failed!')
+                    }
+                }
+                else{
+                    res.status(403).send('Not permission! Only works with users who own this message, or admin')
+                }
+            }
+            else{
+                res.status(404).send('No messages found!')
+            }
+            
         }
         catch(err){
             res.status(400).send(err)

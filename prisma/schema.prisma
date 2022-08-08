@@ -79,7 +79,7 @@ model Reviews {
   buyer_id Int
   seller_id Int
   review String? @db.VarChar(500)
-  rating Float
+  rating Float?
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
 }
