@@ -288,19 +288,27 @@ class PostsController {
                     if(post){
                         // delete image in local folder
                         let delList =[]
-                        // console.log(req.body.delList)
-                        if(typeof(req.body.delList)=='string'){ 
-                            delList = new Array(req.body.delList) 
+                        console.log(req.body.delList)
+                        
+                        let imgPaths = req.body.delList.split("\,")   
+                        for(var i =0; i< imgPaths.length; ++i){
+                            imgPaths[i] = 'src\\public\\post_img\\' + imgPaths[i]
                         }
-                        else{
-                            delList = req.body.delList
-                        }
-                        console.log(delList)
+                        console.log(imgPaths)
+
+                        // if(typeof(req.body.delList)=='string'){ 
+                        //     delList = new Array(req.body.delList) 
+                        // }
+                        // else{
+                        //     delList = req.body.delList
+                        // }
+                        // console.log(delList)
+                        
                         if(JSON.stringify(delList)!= JSON.stringify([''])){
-                            deleteImgInByFileName(delList)
+                            deleteImgInByPath(imgPaths)
                         }
                         // delete record in DB
-                        let deleteImg = await prisma.images.deleteMany({ where:{ image_path : { in: req.body.delList}}})
+                        let deleteImg = await prisma.images.deleteMany({ where:{ image_path : { in: split1}}})
                         var array = req.files
                         for(var i =0; i< array.length; ++i){
                             array[i] = {

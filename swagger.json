@@ -333,9 +333,6 @@
       }
     }
 
-
-
-
       ,
       "/posts":{
         "get": {
@@ -540,8 +537,9 @@
                       "type": "array",
                       "items": {
                         "type": "string"
-                      },
-                      "example": ["str1", "str2", "str3"]
+                        
+                      }
+                      
                     },
                     "title":{
                       "type": "string"
@@ -627,6 +625,421 @@
             }
           }
         }
+        },
+        "/comments": {
+          "parameters": [
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ]
+          ,
+          "get": {
+            "tags": ["Comments"],
+            "summary": "Get all comment",
+            "description": "GET all comments (have pagination), only works for admin. GET comment by post_id works with any roles ",
+            "parameters": [
+            {
+                "name": "page",
+                "in": "query",
+                "description": "Number of page currently. (default page = 1)",
+                "type": "integer"
+            }, {
+                "name": "postId",
+                "in": "query",
+                "description": "Get comments for this post by post id",
+                "type": "integer"
+            }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK",
+                "schema": {
+                  "$ref": "#/definitions/Comments"
+                }
+              }
+            }
+        }
+          ,
+          "post": {
+            "tags": ["Comments"],
+            "summary": "Create new comment",
+            "description": "Create new comment",
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                        "comment": {
+                            "type": "string"
+                        },
+                        "post_id": {
+                          "type": "integer",
+                          "required": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "produces": ["application/json"],
+            "responses": {
+              "200": {
+                "description": "Register successful",
+                "schema": {
+                  "$ref": "#/definitions/Comment"
+                }
+              }
+            }
+          }
+        }
+        ,"/comments/{id}":{
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "ID of comment that we want to find",
+              "type": "integer"
+            },
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ],
+          "patch": {
+            "summary": "Update comment with give ID",
+            "tags": ["Comments"],
+           
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "comment": {
+                        "type": "string"
+                      }
+                  }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Comment is updated",
+                "schema": {
+                  "$ref": "#/definitions/Comment"
+                }
+              }
+            }
+          },
+          "delete": {
+            "summary": "Delete Comment with given ID",
+            "description": "Only works for admin",
+            "tags": ["Comments"],
+            "responses": {
+                "200": {
+                "description": "Comment is deleted",
+                "schema": {
+                    "$ref": "#/definitions/Comment"
+                }
+                }
+            }
+            }
+        },
+        "/reviews": {
+          "parameters": [
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ]
+          ,
+          "get": {
+            "tags": ["Reviews"],
+            "summary": "Get all review",
+            "description": "GET all reviews (have pagination), only works for admin. GET review by seller_id works with any roles ",
+            "parameters": [
+            {
+                "name": "page",
+                "in": "query",
+                "description": "Number of page currently. (default page = 1)",
+                "type": "integer"
+            }, {
+                "name": "sellerId",
+                "in": "query",
+                "description": "Get reviews for this post by reviews id",
+                "type": "integer"
+            }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK",
+                "schema": {
+                  "$ref": "#/definitions/Reviews"
+                }
+              }
+            }
+        }
+          ,
+          "post": {
+            "tags": ["Reviews"],
+            "summary": "Create new review",
+            "description": "Create new review",
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                        "review": {
+                            "type": "string"
+                        },
+                        "rating": {
+                          "type": "integer"
+                        },
+                        "seller_id": {
+                          "type": "integer",
+                          "required": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "produces": ["application/json"],
+            "responses": {
+              "200": {
+                "description": "Register successful",
+                "schema": {
+                  "$ref": "#/definitions/Reviews"
+                }
+              }
+            }
+          }
+        }
+        ,"/reviews/{id}":{
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "ID of review that we want to find",
+              "type": "integer"
+            },
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ],
+          "patch": {
+            "summary": "Update review with give ID",
+            "tags": ["Reviews"],
+           
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "review": {
+                        "type": "string"
+                      },
+                      "rating": {
+                        "type": "integer"
+                      }
+                  }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "review is updated",
+                "schema": {
+                  "$ref": "#/definitions/Review"
+                }
+              }
+            }
+          },
+          "delete": {
+            "summary": "Delete review with given ID",
+            "description": "Only works for admin",
+            "tags": ["Reviews"],
+            "responses": {
+                "200": {
+                "description": "review is deleted",
+                "schema": {
+                    "$ref": "#/definitions/Review"
+                }
+                }
+            }
+            }
+        }
+        ,
+        "/messages": {
+          "parameters": [
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ]
+          ,
+          "get": {
+            "tags": ["Messages"],
+            "summary": "Get all Message",
+            "description": "GET all Messages (have pagination), only works for admin",
+            "parameters": [
+            {
+                "name": "page",
+                "in": "query",
+                "description": "Number of page currently. (default page = 1)",
+                "type": "integer"
+            }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK",
+                "schema": {
+                  "$ref": "#/definitions/Messages"
+                }
+              }
+            }
+        }
+          ,
+          "post": {
+            "tags": ["Messages"],
+            "summary": "Create new Message",
+            "description": "Create new Message",
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                        "message": {
+                            "type": "string"
+                        },
+                        "receive_id": {
+                          "type": "integer"
+                        }
+                    }
+                  }
+                }
+              }
+            },
+            "produces": ["application/json"],
+            "responses": {
+              "200": {
+                "description": "Register successful",
+                "schema": {
+                  "$ref": "#/definitions/Messages"
+                }
+              }
+            }
+          }
+        }
+        ,"/messages/{id}":{
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "ID of Message that we want to find",
+              "type": "integer"
+            },
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ],
+          "patch": {
+            "summary": "Update Message with give ID",
+            "tags": ["Messages"],
+           
+            "requestBody": {
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                  }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Message is updated",
+                "schema": {
+                  "$ref": "#/definitions/Message"
+                }
+              }
+            }
+          },
+          "delete": {
+            "summary": "Delete Message with given ID",
+            "description": "Only works for admin",
+            "tags": ["Messages"],
+            "responses": {
+                "200": {
+                "description": "Message is deleted",
+                "schema": {
+                    "$ref": "#/definitions/Message"
+                }
+                }
+            }
+            }
+        }
+        ,
+        "/messages/{id}/chat": {
+          "parameters": [
+            {
+                "name": "x-access-token",
+                "in": "header",
+                "description": "You must login first, then return token, copy this token and paste below. To authentication this account.",
+                "type": "string"
+            }
+          ]
+          ,
+          "get": {
+            "tags": ["Messages"],
+            "summary": "Conversation between me and the user hasve this id.",
+            "description": "Conversation between me and the user hasve this id.",
+            "parameters": [
+            {
+                "name": "id",
+                "in": "path",
+                "description": "User want to get conversation",
+                "type": "integer"
+            }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK",
+                "schema": {
+                  "$ref": "#/definitions/Messages"
+                }
+              }
+            }
+        }
         }
 
     },
@@ -672,21 +1085,20 @@
           "$ref": "#/definitions/User"
         },
         "Post": {
-            "required": ["id", "email", "password", "role_id"],
+            "required": ["id", "user_id"],
             "properties": {
               "id": {
                   "type": "integer",
                   "uniqueItems": true
               },
-              "full_name": {
+              "title": {
                 "type": "string"
               },
-              "email": {
-                "type": "string",
-                "uniqueItems": true
-                },
-              "password": {
+              "content": {
                 "type": "string"
+                },
+              "price": {
+                "type": "integer"
               },
               "phone": {
                   "type": "string"
@@ -699,17 +1111,119 @@
                   "type": "string",
                   "format": "date-time"
               },
-              "reset_password_token": {
-                "type": "string"
+              "views": {
+                "type": "integer"
                   },
-              "role_id": {
+              "status": {
                   "type": "integer"
-              }
+              },
+              "user_id": {
+                "type": "integer"
+            }
             }
           },
           "Posts": {
             "type": "array",
-            "$ref": "#/definitions/User"
+            "$ref": "#/definitions/Post"
+          },
+          "Comment": {
+            "required": ["id", "user_id", "post_id", "comment"],
+            "properties": {
+              "id": {
+                  "type": "integer",
+                  "uniqueItems": true
+              },
+              "user_id": {
+                "type": "integer"
+              },
+              "post_id": {
+                "type": "integer"
+                },
+              "comment": {
+                "type": "string"
+              },
+              "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+              },
+              "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+              }
+            }
+          },
+          "Comments": {
+            "type": "array",
+            "$ref": "#/definitions/Comment"
+          }
+          ,
+          "Review": {
+            "required": ["id", "seller_id", "buyer_id", "review"],
+            "properties": {
+              "id": {
+                  "type": "integer",
+                  "uniqueItems": true
+              },
+              "seller_id": {
+                "type": "integer"
+              },
+              "buyer_id": {
+                "type": "integer"
+              },
+              "review": {
+                "type": "string"
+              },
+              "rating": {
+                "type": "integer"
+              },
+              "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+              },
+              "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+              }
+              
+            }
+          },
+          "Reviews": {
+            "type": "array",
+            "$ref": "#/definitions/Review"
+          },
+          "Message": {
+            "required": ["id", "sender_id", "receive_id", "message"],
+            "properties": {
+              "id": {
+                  "type": "integer",
+                  "uniqueItems": true
+              },
+              "sender_id": {
+                "type": "integer"
+              },
+              "receive_id": {
+                "type": "integer"
+              },
+              "message": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "created_at": {
+                  "type": "string",
+                  "format": "date-time"
+              },
+              "updated_at": {
+                  "type": "string",
+                  "format": "date-time"
+              }
+              
+            }
+          },
+          "Messages": {
+            "type": "array",
+            "$ref": "#/definitions/Message"
           }
       }
   }

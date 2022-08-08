@@ -6,9 +6,9 @@ const messagesController = require('../controllers/MessagesController')
 
 router.post('/', [auth] , messagesController.createMessage)
 router.get('/', auth , messagesController.getMessages)
-router.get('/:id/chat', auth , messagesController.getConversation)
-// router.patch('/:id',[ auth], messagesController.updateMessage)
-// router.delete('/:id',auth , messagesController.deleteMessage)
+router.get('/:id/chat', auth , messagesController.getConversationToOther)
+router.patch('/:id',[ auth], messagesController.updateMessage)
+router.delete('/:id',auth , messagesController.deleteMessage)
 
 
 

@@ -7,17 +7,19 @@ class ReviewsController{
     // Only works for buyer to review seller
     async createReview(req, res, next) {
         try{
-            let seller = await prisma.users.findFirst({where: { id: req.body.seller_id}})
+            let sellerId = parseInt(req.body.seller_id)
+            let rating = parseFloat(req.body.rating)
+            let seller = await prisma.users.findFirst({where: { id: sellerId}})
             if(seller) {
                 if(req.user.role_id == 3 && seller.role_id == 2){
                     let date = new Date()
                     date.setHours(date.getHours()+7)
                     let review = await prisma.reviews.create({
                         data: {
-                            seller_id: req.body.seller_id,
+                            seller_id: sellerId,
                             buyer_id: req.user.id,
                             review: req.body.review,
-                            rating: req.body.rating,
+                            rating: rating,
                             created_at: date,
                             updated_at: date
                         }
@@ -45,15 +47,22 @@ class ReviewsController{
     // [GET] /api/reviews/       
     // GET all reviews (have pagination)
     // Only works for admin
-    async getReviews(req, res, next) { 
+    async getReviews(req, res, next) {
         try{
-            if(req.user.role_id == 1){
-                let perPage = 50
-                let page = parseInt(req.query.page) || 1
-                let reviews = await prisma.reviews.findMany({
-                    skip: (perPage * page) - perPage,
-                    take: perPage,
-                })
+            let sellerId = parseInt(req.query.sellerId)
+            let perPage = 50
+            let page = parseInt(req.query.page) || 1
+            let data = {
+                skip: (perPage * page) - perPage,
+                take: perPage,
+            }
+            if(Number.isInteger(sellerId)){
+                data["where"] = { seller_id: sellerId }
+            }
+            console.log('data', data)
+            let reviews = await prisma.reviews.findMany(data)
+            console.log(reviews)
+            if(Number.isInteger(sellerId)){
                 if(reviews) {
                     res.send(reviews)
                 }
@@ -62,7 +71,12 @@ class ReviewsController{
                 }
             }
             else{
-                res.status(403).send('No permission! Only admin can get reviews.')
+                if(req.user.role_id == 1 && reviews){
+                    res.send(reviews)
+                }
+                else{
+                    res.status(403).send('No permission! Only admin can get reviews.')
+                }
             }
             
         }
@@ -78,6 +92,7 @@ class ReviewsController{
             let date = new Date()
             date.setHours(date.getHours()+7)
             let id = parseInt(req.params.id)
+            let rating = parseFloat(req.body.rating)
             let review = await prisma.reviews.findFirst({ where: { id: id}})
             if(review){
                 if(req.user.id != review.buyer_id){
@@ -90,7 +105,7 @@ class ReviewsController{
                     }, data: {
                         review: req.body.review,
                         updated_at: date,
-                        rating: req.body.rating
+                        rating: rating
                     }
                     })
                     if(update) {
