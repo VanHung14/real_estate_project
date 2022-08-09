@@ -169,8 +169,8 @@ class UsersController {
 
     // [POST]/api/users/login
     async login(req, res){
-        console.log(req.body.email)
-        console.log(req.body.password)
+        // console.log(req.body.email)
+        // console.log(req.body.password)
         try {
             let user =  await prisma.users.findFirst( {where: { email: req.body.email} })
             if(user) {
@@ -231,7 +231,7 @@ class UsersController {
 
     // [POST] /api/users
     async register(req, res) {
-        console.log(req.body)
+        // console.log(req.body)
         try{
             let user = await prisma.users.findFirst( {where: {  OR: [
                 { AND: { email : req.body.email} },

@@ -16,7 +16,7 @@ describe("POST /api/users", () => {
 
         test("login with email password", async () => {
             const response = await request(index).post("/api/users/login").send({
-                email: "tuantv2@rikkeisoft.com",
+                email: "hoangl@rikkeisoft.com",
                 password: "123456"
             })
             expect(response.statusCode).toBe(200)
@@ -26,8 +26,8 @@ describe("POST /api/users", () => {
     describe("when the username and password is missing", () => {
         test("should respond with a status code of 400", async () => {
             const bodyData = [
-            {email: "tuantv2@rikkeisoft.com"},
-            {password: "123456"},
+            {   email: "hoangl@rikkeisoft.com"},
+            {   password: "123456"},
             {}
             ]
             for (const body of bodyData) {
@@ -41,9 +41,7 @@ describe("POST /api/users", () => {
 describe("GET /api/user/:id", () => {
     describe("Given a username and password", () => {
         test("Get user by id", () => {
-            const res = await request(index).get("/api/users/14").send({
-                
-            })
+            const res = request(index).get("/api/users/7")
             expect(res.statusCode).toBe(200)
         })
     })
