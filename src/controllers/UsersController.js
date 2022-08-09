@@ -1,9 +1,9 @@
 const bcrypt = require('bcrypt')
 const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
 const validator = require("email-validator")
 const validatePhone = require('validate-phone-number-node-js')
 const utils = require('../utils/utils');
-const prisma = new PrismaClient()
 const randtoken = require('rand-token')
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
@@ -29,7 +29,7 @@ class UsersController {
                 },
                     )
                     
-                if(seller) {
+                if(JSON.stringify(seller)!= JSON.stringify([]) ) {
                     res.send(seller)
                 }
                 else{
@@ -54,17 +54,18 @@ class UsersController {
                 let user = await prisma.users.findFirst({where: {
                     id: id
                 }})
+
                 if(user){
                     res.send(user)
                 }
                 else{
                     res.status(404).send('No user found!')
                 }
+
             }
             else{ 
                 res.status(403).send('No permission! Only works for myself, or admin')
             }
-           
         }
         catch(err){
             res.status(400).send(err)
@@ -80,15 +81,18 @@ class UsersController {
             const salt = await bcrypt.genSalt(10)   
             let full_name = req.body.full_name || undefined
             let password 
-            if(req.body.password!=''){
+            if(req.body.password){
                 password = await bcrypt.hash(req.body.password, salt)
             } 
             else{
                 password = undefined
             }
+            
+
             let phone = req.body.phone || undefined
             let role_id = parseInt(req.body.role_id)  || undefined
             let id = parseInt(req.params.id)
+            // console.log(req.user)
             if(req.user.id == 1 || req.user.id == id){
                 let data = {}
                 let date = new Date()
@@ -107,7 +111,7 @@ class UsersController {
                     res.send(update)
                 }
                 else{
-                    res.status(404).send('Update user failed!')
+                    res.status(400).send('Update user failed!')
                 }
             }
             else{
@@ -135,7 +139,7 @@ class UsersController {
                 for(var i =0; i< imgPath.length; ++i){
                     delList.push(imgPath[i].image_path)
                 }
-                console.log(delList)
+                // console.log(delList)
                 
                 let delUser = await prisma.users.delete({where : { id: id }})   
                 if(delUser){
@@ -203,17 +207,19 @@ class UsersController {
     // [POST]/api/users/refresh-token
     async refreshToken (req, res) {
         const { refreshToken } = req.body;
-        console.log('refresh Token:', refreshToken)
+        // console.log('refresh Token:', refreshToken)
         if ((refreshToken) && (refreshToken in tokenList)) {
+        // if ((refreshToken)) {
             try {
-                await utils.verifyJwtToken(refreshToken, config.refreshTokenSecret);
-                const user = tokenList[refreshToken];
-                const token = jwt.sign(user, config.secret, { expiresIn: config.tokenLife,
-                });
+                const userRe = await utils.verifyJwtToken(refreshToken, config.refreshTokenSecret);
+                const user = tokenList[refreshToken] || userRe;
+                
+                const token = jwt.sign(user, config.secret, { expiresIn: config.tokenLife, });
                 const response = {
                   token,
                 }
-                res.status(200).json(response);
+                console.log(user)
+                res.status(200).json(response)
             }
             catch(err){
                 console.error(err);
@@ -280,31 +286,36 @@ class UsersController {
 
     // [POST] /api/users/forgot-password
     async forgotPassword(req, res, next){
-        var email = req.body.email;
-        var phone = req.body.phone || "";
-        let user = await prisma.users.findFirst({where: {
-            email: email,
-            phone: phone
-        }})
-        if(user) {
-            var token = randtoken.generate(20);
-            var sent = await sendEmail(email, token)
-            if(sent==1){
-                var data = {
-                    reset_password_token: token
+        try{ 
+            var email = req.body.email;
+            var phone = req.body.phone || "";
+            let user = await prisma.users.findFirst({where: {
+                email: email,
+                phone: phone
+            }})
+            if(user) {
+                var token = randtoken.generate(20);
+                var sent = await sendEmail(email, token)
+                if(sent==1){
+                    var data = {
+                        reset_password_token: token
+                    }
+                    await prisma.users.update({where: {
+                        email: email,
+                        },
+                        data})
+                    res.send('Send email successful! resetPassToken: '+ token)
                 }
-                await prisma.users.update({where: {
-                    email: email,
-                    },
-                    data})
-                res.send('Send email successful! resetPassToken: '+ token)
+                else{
+                    res.status(400).send('Send email failed!')
+                }
             }
             else{
-                res.send('Send email failed!')
+                res.status(404).send('No user founded!')
             }
         }
-        else{
-            res.status(404).send('No user founded!')
+        catch(err){
+            res.status(400).send(err)
         }
     }
 
@@ -314,12 +325,11 @@ class UsersController {
         // console.log(token)
     }
 
-    //[PATCH] /api/users/reset-password
+    //[put] /api/users/reset-password
     async resetPassword(req, res, next){  
         var token = req.body.resetPassToken;
         var password = req.body.password;
         const salt = await bcrypt.genSalt(10)
-        
         let user = await prisma.users.findFirst({where: {
             reset_password_token: token,
         }})
