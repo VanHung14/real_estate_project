@@ -11,7 +11,7 @@ class PostsController {
 
     // [GET] /api/posts?sort=&direct=&filter=address&city=&district=&ward=
     async getPosts(req, res, next) {
-        console.log(req.query.search)
+        // console.log(req.query.search)
         try{
             let perPage = 10
             let page = parseInt(req.query.page) || 1
@@ -22,12 +22,16 @@ class PostsController {
                     take: perPage,
                 })
                 if(posts){
+                
+                    // console.log(posts)
                     for(var i = 0; i< posts.length;++i){
                         let address = await prisma.address.findFirst({where: {id : posts[i].id}})
                         posts[i].address = address
                         let image = await prisma.images.findFirst({where:{ post_id: posts[i].id}})
                         posts[i].first_image_path= image.image_path
+                        
                     }
+
                     res.send(posts)
                 }
                 else{
@@ -261,7 +265,6 @@ class PostsController {
             let date = new Date()
             date.setHours(date.getHours()+7)
             let checkPost = await prisma.posts.findFirst({ where: { id: id }})
-            // console.log(checkPost)
             if(checkPost){                   
                 
             // check if post is available
@@ -288,13 +291,12 @@ class PostsController {
                     if(post){
                         // delete image in local folder
                         let delList =[]
-                        console.log(req.body.delList)
                         
                         let imgPaths = req.body.delList.split("\,")   
                         for(var i =0; i< imgPaths.length; ++i){
                             imgPaths[i] = 'src\\public\\post_img\\' + imgPaths[i]
                         }
-                        console.log(imgPaths)
+                        // console.log(imgPaths)
 
                         // if(typeof(req.body.delList)=='string'){ 
                         //     delList = new Array(req.body.delList) 
@@ -302,20 +304,23 @@ class PostsController {
                         // else{
                         //     delList = req.body.delList
                         // }
-                        // console.log(delList)
                         
-                        if(JSON.stringify(delList)!= JSON.stringify([''])){
+                        if(JSON.stringify(delList) != JSON.stringify([])){
                             deleteImgInByPath(imgPaths)
                         }
                         // delete record in DB
-                        let deleteImg = await prisma.images.deleteMany({ where:{ image_path : { in: split1}}})
+                        
+                        let deleteImg = await prisma.images.deleteMany({ where:{ image_path : { in: imgPaths}}})
+                        
                         var array = req.files
+                        
                         for(var i =0; i< array.length; ++i){
                             array[i] = {
                                 image_path: array[i].path,
                                 post_id: post.id
                             }
                         }
+                        
                         let image = await prisma.images.createMany({
                             data : array
                         })
