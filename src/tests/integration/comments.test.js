@@ -26,7 +26,7 @@ describe('/api/comments', () => {
 
             expect(res.status).toBe(200)
         })
-        it("should return 204 if no posts found", async () => {
+        it("should return 204 if no comments found of post has this id", async () => {
             const token = await generateAdminToken()
             const res = await request(server)
                             .get('/api/comments?postId=77')
@@ -34,7 +34,7 @@ describe('/api/comments', () => {
 
             expect(res.status).toBe(204)
         })
-        it("should return 204 if no posts found", async () => {
+        it("should return 403 if no permission (only for admin )", async () => {
             const token = await generateAuthToken(3, "chauhh@rikkeisoft.com", "123456", 2)
             const res = await request(server)
                             .get('/api/comments')
