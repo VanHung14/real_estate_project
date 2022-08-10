@@ -8,23 +8,21 @@ const jwt = require('jsonwebtoken')
 const config = require('../../configs/config');
 const utils = require('../../utils/utils');
 
-
 var tokenList = {}
 describe("POST /api/users", () => {
 
     beforeEach(() => { server = require('../../index')} )
-    afterEach(() => { server.close() } )
 
     describe("register", () => {
-        // it("should return a user if register sucessful!", async () => {
-        //     const response = await request(server).post("/api/users").send({
-        //         email: "tuantv2@rikkeisoft.com",
-        //         password: "123456",
-        //         role_id: 3,
-        //         phone: "0931224554"
-        //     })
-        //     expect(response.statusCode).toBe(200)
-        //     })
+        it("should return a user if register sucessful!", async () => {
+            const response = await request(server).post("/api/users").send({
+                email: "tuantv2@rikkeisoft.com",
+                password: "123456",
+                role_id: 3,
+                phone: "0931224554"
+            })
+            expect(response.statusCode).toBe(200)
+            })
         it("should return 400 if email illegal or phone-number has already registerd!", async () => {
             const response = await request(server).post("/api/users").send({
                 email: "rikkeisoft.com",
@@ -72,7 +70,6 @@ describe("POST /api/users", () => {
 describe("GET /api/users/:id", () => {
 
     beforeEach(() => { server = require('../../index')} )
-    afterEach(() => { server.close() } )
 
     it("should return a user if valid id is passed", async () => {
         const token = await generateAdminToken()
@@ -98,7 +95,6 @@ describe("GET /api/users/:id", () => {
 describe("GET /api/users/:rolId/list", () => {
 
     beforeEach(() => { server = require('../../index')} )
-    afterEach(() => { server.close() } )
 
     it("should return a user if valid role id is passed", async () => {
         const token = await generateAdminToken()
@@ -123,7 +119,6 @@ describe("GET /api/users/:rolId/list", () => {
 describe("PATCH /api/users/:id", () => {
 
     beforeEach(() => { server = require('../../index')} )
-    afterEach(() => { server.close() } )
     
     it('should return a user if update user successful!', async () => {
         let id = 3
@@ -156,26 +151,42 @@ describe("PATCH /api/users/:id", () => {
     })
 })
 
-// describe("POST /api/users/refresh-token", () => {
+describe("POST /api/users/refresh-token", () => {
 
-//     beforeEach(() => { server = require('../../index')} )
-//     afterEach(() => { server.close() } )
+    beforeEach(() => { server = require('../../index')} )
 
-//     it("should return token if refresh Token successful!", async () => {
-//         const refreshToken = await generateRefreshToken()
 
-//         const res = await request(server)
-//                         .post('/api/users/refresh-token')
-//                         .send( {refreshToken: refreshToken})
-//     expect(res.status).toBe(200)
-//     })
-// })
+
+    it("should return token if refresh Token successful!", async () => {
+        // const refreshToken = await request(server).post("/api/users/login").send({
+        //     email: "tuantv2@rikkeisoft.com",
+        //     password: "123456"
+        // })
+        // console.log(refreshToken.body.refreshToken)
+        const refreshToken = await getRefreshToken()
+        const res = await request(server)
+                        .post('/api/users/refresh-token')
+                        .send( {refreshToken: refreshToken})
+        expect(res.status).toBe(200)
+
+
+
+
+    //     const refreshToken = await generateRefreshToken()
+    //     console.log("refreshToken:",refreshToken)
+    //     const decoded = await utils.verifyJwtToken(refreshToken, config.refreshTokenSecret);
+    //     console.log("decoded :", decoded)
+    //     const res = await request(server)
+    //                     .post('/api/users/refresh-token')
+    //                     .send( {refreshToken: refreshToken})
+    // expect(res.status).toBe(200)
+    })
+})
 
 
 describe("POST /api/users/forgot-password", () => {
 
     beforeEach(() => { server = require('../../index')} )
-    afterEach(() => { server.close() } )
 
     // comment in order not to send email
     // it("should return 200 if send email successful", async () => {
@@ -195,7 +206,6 @@ describe("POST /api/users/forgot-password", () => {
 describe("POST /api/users/reset-password", () => {
 
     beforeEach(() => { server = require('../../index')} )
-    afterEach(() => { server.close() } )
 
     it("should return 200 if reset password successful", async () => {
         const res = await request(server)
@@ -233,4 +243,13 @@ async function generateRefreshToken(id = 1, email = "hungdv_tts@rikkeisoft.com",
     const user = new Object({id: id, email: email, password: passCrypt, role_id: role_id})
     const refreshToken = jwt.sign(user, config.refreshTokenSecret, { expiresIn: config.refreshTokenLife })
     return refreshToken
+}
+
+// login will return token and refreshToken
+async function getRefreshToken(email = "hungdv_tts@rikkeisoft.com", password= "123456"){
+    const refreshToken = await request(server).post("/api/users/login").send({
+        email: "tuantv2@rikkeisoft.com",
+        password: "123456"
+    })
+    return refreshToken.body.refreshToken
 }

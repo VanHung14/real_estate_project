@@ -173,8 +173,6 @@ class UsersController {
 
     // [POST]/api/users/login
     async login(req, res){
-        // console.log(req.body.email)
-        // console.log(req.body.password)
         try {
             let user =  await prisma.users.findFirst( {where: { email: req.body.email} })
             if(user) {
@@ -182,7 +180,8 @@ class UsersController {
                 if(validPassword) {
 
                     const token = jwt.sign(user, config.secret, { expiresIn: config.tokenLife, })
-                    const refreshToken = jwt.sign(user, config.refreshTokenSecret, { expiresIn: config.refreshTokenLife })
+                    const refreshToken = jwt.sign(user, config.refreshTokenSecret, 
+                        { expiresIn: config.refreshTokenLife })
                     tokenList[refreshToken] = user;
                     const response = {
                         token,
@@ -207,18 +206,15 @@ class UsersController {
     // [POST]/api/users/refresh-token
     async refreshToken (req, res) {
         const { refreshToken } = req.body;
-        // console.log('refresh Token:', refreshToken)
         if ((refreshToken) && (refreshToken in tokenList)) {
-        // if ((refreshToken)) {
             try {
-                const userRe = await utils.verifyJwtToken(refreshToken, config.refreshTokenSecret);
-                const user = tokenList[refreshToken] || userRe;
+                await utils.verifyJwtToken(refreshToken, config.refreshTokenSecret);
+                const user = tokenList[refreshToken] 
                 
                 const token = jwt.sign(user, config.secret, { expiresIn: config.tokenLife, });
                 const response = {
                   token,
                 }
-                console.log(user)
                 res.status(200).json(response)
             }
             catch(err){
@@ -226,7 +222,7 @@ class UsersController {
                 res.status(403).json({
                   message: 'Invalid refresh token',
                 });
-            }
+            }   
         }
         else {
             res.status(400).json({

@@ -35,6 +35,16 @@ module.exports = async function (req, res, next){
     }
   } 
   else {
+    if(req.files != undefined){
+      try { // xoa file o trong folder khi sai token
+        var array = req.files
+        for(var i =0; i< array.length; ++i){
+            fs.unlinkSync(array[i].path)
+        }
+      } catch(err) {
+        console.error(err)
+      }
+    }
     return res.status(403).send({
       message: 'No token provided.',
     })

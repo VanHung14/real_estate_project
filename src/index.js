@@ -25,10 +25,11 @@ app.use(
 
 route(app)
 
+module.exports = app
 
-const server = app.listen(port, () => {
-  console.log(`App listening on port ${port}`)
-})   
+// const server = app.listen(port, () => {
+//   console.log(`App listening on port ${port}`)
+// })   
 
-module.exports = server
+// module.exports = server
 

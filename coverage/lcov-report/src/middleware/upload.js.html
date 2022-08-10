@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">73.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/30</span>
+                <span class='fraction'>22/30</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">75% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">73.33% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/30</span>
+                <span class='fraction'>22/30</span>
             </div>
         
             
@@ -96,19 +96,20 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -117,28 +118,27 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">var multer = require('multer')
 &nbsp;
 var storage = multer.diskStorage({
-    destination: <span class="fstat-no" title="function not covered" >(req, file, cb) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        cb(null, 'src\\public\\post_img')</span>
-<span class="cstat-no" title="statement not covered" >    },</span>
-    filename: <span class="fstat-no" title="function not covered" >(req, file, cb) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        cb(null, Date.now() + '-'+ file.originalname)</span>
-<span class="cstat-no" title="statement not covered" >        // cb(null, file.fieldname + '-' + Date.now() + file.originalname.match(/\..*$/)[0])</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
+    destination: (req, file, cb) =&gt; {
+        cb(null, 'src\\public\\post_img')
+    },
+    filename: (req, file, cb) =&gt; {
+        cb(null, Date.now() + '-'+ file.originalname)
+        // cb(null, file.fieldname + '-' + Date.now() + file.originalname.match(/\..*$/)[0])
+    }
     
 });
 &nbsp;
 var upload = multer({ 
     storage,
     limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
-    fileFilter: <span class="fstat-no" title="function not covered" >(req, file, cb) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") </span>
+    fileFilter: (req, file, cb) =&gt; {
+<span class="branch-0 cbranch-no" title="branch not covered" >        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") </span>
 <span class="cstat-no" title="statement not covered" >        {</span>
 <span class="cstat-no" title="statement not covered" >            cb(null, true);</span>
 <span class="cstat-no" title="statement not covered" >        } else {</span>
@@ -147,7 +147,7 @@ var upload = multer({
 <span class="cstat-no" title="statement not covered" >            err.name = 'ExtensionError'</span>
 <span class="cstat-no" title="statement not covered" >            return cb(err);</span>
 <span class="cstat-no" title="statement not covered" >        }</span>
-<span class="cstat-no" title="statement not covered" >    }, });  </span>
+    }, });  
 &nbsp;
 &nbsp;
 module.exports = upload </pre></td></tr></table></pre>
@@ -157,7 +157,11 @@ module.exports = upload </pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+<<<<<<< HEAD
                 at 2022-08-08T09:27:43.973Z
+=======
+                at 2022-08-10T10:39:37.207Z
+>>>>>>> 7f8f15be628c13931feb1462cee9a2f617ae3d8c
             </div>
         <script src="../../prettify.js"></script>
         <script>

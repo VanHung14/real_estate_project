@@ -18,7 +18,7 @@ class MessagesController {
                 }
             })
             if(message) {
-                res.status(201).send(message)
+                res.status(200).send(message)
             }
             else{
                 res.status(400).send('message failed!')
@@ -40,11 +40,11 @@ class MessagesController {
                     skip: (perPage * page) - perPage,
                     take: perPage,
                 })
-                if(messages){
+                if(JSON.stringify(messages) != JSON.stringify([])){
                     res.send(messages)
                 }
                 else{
-                    res.status(404).send('No messages found!')
+                    res.status(204).send('No messages found!')
                 }
             }
             else{
@@ -88,7 +88,7 @@ class MessagesController {
                 }
             }
             else{ 
-                res.status(404).send('No message found!')
+                res.status(204).send('No message found!')
             }
             
             
@@ -121,11 +121,11 @@ class MessagesController {
                 },
                 orderBy: [{created_at : 'desc'}],
             })
-            if(conversation) {
+            if(JSON.stringify(conversation) != JSON.stringify([])) {
                 res.send(conversation)
             }
             else{
-                res.status(404).send('No conversation found!')
+                res.status(204).send('No conversation found!')
             }
         }
         catch(err){
@@ -155,7 +155,7 @@ class MessagesController {
                 }
             }
             else{
-                res.status(404).send('No messages found!')
+                res.status(204).send('No messages found!')
             }
             
         }
