@@ -59,15 +59,15 @@ class ReviewsController{
             if(Number.isInteger(sellerId)){
                 data["where"] = { seller_id: sellerId }
             }
-            console.log('data', data)
+            // console.log('data', data)
             let reviews = await prisma.reviews.findMany(data)
-            console.log(reviews)
+            // console.log(reviews)
             if(Number.isInteger(sellerId)){
-                if(reviews) {
+                if(JSON.stringify(reviews) != JSON.stringify([])) {
                     res.send(reviews)
                 }
                 else{
-                    res.status(400).send('No reviews found!')
+                    res.status(204).send('No reviews found!')
                 }
             }
             else{
@@ -117,7 +117,7 @@ class ReviewsController{
                 }
             }
             else {
-                res.status(404).send('No review found!')
+                res.status(204).send('No review found!')
             }
             
         }
@@ -133,7 +133,7 @@ class ReviewsController{
             let id = parseInt(req.params.id)
             let review = await prisma.reviews.findFirst({ where: { id: id}})
             if(review){
-                if(req.user.id == review.user_id || req.user.role_id == 1 ){
+                if(req.user.id == review.buyer_id || req.user.role_id == 1 ){
                     let delCmt = await prisma.reviews.delete({ where: { id: id}})
                     if(delCmt){
                         res.send(delCmt)
@@ -147,7 +147,7 @@ class ReviewsController{
                 }
             }
             else{
-                res.status(404).send('No reviews found!')
+                res.status(204).send('No reviews found!')
             }
             
         }
