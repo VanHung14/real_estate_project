@@ -54,7 +54,6 @@ class MessagesController {
   // Only works with users who own this message
   async updateMessage(req, res, next) {
     try {
-      console.log(req.body);
       let date = new Date();
       date.setHours(date.getHours() + 7);
       let id = parseInt(req.params.id);

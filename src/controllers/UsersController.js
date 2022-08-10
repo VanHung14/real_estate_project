@@ -10,55 +10,35 @@ const jwt = require("jsonwebtoken");
 const config = require("../configs/config");
 const fs = require("fs");
 
+const UsersService = require("../services/UsersService");
+
 var tokenList = {};
 class UsersController {
-  // [GET] /api/users/:roleId/list
-  // Only works for admin
-  async getListUserByRoleId(req, res, next) {
+  // [GET] /api/users/:id
+  async getUserById(req, res, next) {
+    let id = parseInt(req.params.id);
+    let user_id = req.user.id;
+    let role_id = req.user.role_id;
     try {
-      let role_id = parseInt(req.params.roleId);
-      if (req.user.role_id == 1) {
-        let seller = await prisma.users.findMany({
-          where: {
-            role_id: role_id,
-          },
-        });
-
-        if (JSON.stringify(seller) != JSON.stringify([])) {
-          res.send(seller);
-        } else {
-          res.status(404).send("No seller found!");
-        }
-      } else {
-        res.status(403).send("No permision! Only works for admin.");
-      }
+      let result = await UsersService.getUserById(id, user_id, role_id);
+      res.send(result);
     } catch (err) {
-      res.status(400).send(err);
+      res.status(err).send();
     }
   }
 
-  // [GET] /api/users/:id
-  // Only works for myself, or admin
-  async getUserById(req, res, next) {
+  // [GET] /api/users/:roleId/list
+  async getListUserByRoleId(req, res, next) {
+    let role_id = parseInt(req.params.roleId);
+    let role_id_auth = req.user.role_id;
     try {
-      let id = parseInt(req.params.id);
-      if (req.user.role_id == 1 || req.user.id == id) {
-        let user = await prisma.users.findFirst({
-          where: {
-            id: id,
-          },
-        });
-
-        if (user) {
-          res.send(user);
-        } else {
-          res.status(404).send("No user found!");
-        }
-      } else {
-        res.status(403).send("No permission! Only works for myself, or admin");
-      }
+      let result = await UsersService.getListUserByRoleId(
+        role_id,
+        role_id_auth
+      );
+      res.send(result);
     } catch (err) {
-      res.status(400).send(err);
+      res.status(err).send();
     }
   }
 
@@ -74,11 +54,9 @@ class UsersController {
       } else {
         password = undefined;
       }
-
       let phone = req.body.phone || undefined;
       let role_id = parseInt(req.body.role_id) || undefined;
       let id = parseInt(req.params.id);
-      // console.log(req.user)
       if (req.user.id == 1 || req.user.id == id) {
         let data = {};
         let date = new Date();
@@ -90,12 +68,7 @@ class UsersController {
           updated_at: date,
           role_id: role_id,
         };
-        let update = await prisma.users.update({
-          where: {
-            id: id,
-          },
-          data,
-        });
+        let update = await prisma.users.update({ where: { id: id }, data });
         if (update) {
           res.send(update);
         } else {

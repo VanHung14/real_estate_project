@@ -5,7 +5,7 @@ const auth = require("../middleware/auth");
 const usersController = require("../controllers/UsersController");
 
 router.get("/:roleId/list", auth, usersController.getListUserByRoleId); // get user theo role
-router.get("/:id", usersController.getUserById);
+router.get("/:id", auth, usersController.getUserById);
 router.patch("/:id", auth, usersController.updateUser);
 router.delete("/:id", auth, usersController.deleteUser);
 router.post("/login", usersController.login);
