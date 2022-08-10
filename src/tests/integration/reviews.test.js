@@ -9,117 +9,120 @@ let server;
 
 beforeAll(() => { server = require('../../index')} )
 
-describe('/api/messages', () => {
-    describe('GET /api/messages', () => {
-        it("should return all messages", async () => {
+describe('/api/reviews', () => {
+    describe('GET /api/reviews', () => {
+        it("should return all reviews", async () => {
             const token = await generateAdminToken()
             const res = await request(server)
-                            .get('/api/messages/')
+                            .get('/api/reviews/')
                             .set('x-access-token', token)   
             expect(res.status).toBe(200)
         })
-        it("should return 204 if no messages found", async () => {
+        it("should return list reviews by seller id", async () => {
             const token = await generateAdminToken()
             const res = await request(server)
-                            .get('/api/messages?page=20')
+                            .get('/api/reviews?sellerId=3')
+                            .set('x-access-token', token)   
+
+            expect(res.status).toBe(200)
+        })
+        it("should return 204 if no reviews found of post has this id", async () => {
+            const token = await generateAdminToken()
+            const res = await request(server)
+                            .get('/api/reviews?sellerId=2')
                             .set('x-access-token', token)   
             expect(res.status).toBe(204)
         })
-        it("should return 403 if no permission", async () => {
+        it("should return 403 if no permission (only for admin )", async () => {
             const token = await generateAuthToken(3, "chauhh@rikkeisoft.com", "123456", 2)
             const res = await request(server)
-                            .get('/api/messages')
+                            .get('/api/reviews')
                             .set('x-access-token', token)   
             expect(res.status).toBe(403)
         })
     })
 
-    describe('POST /api/message', () => {
-        // it('should return message if create message successful', async () => {
+    describe('POST /api/review', () => {
+        // it('should return review if create review successful', async () => {
         //     const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
         //     const res = await request(server)
-        //                     .post('/api/messages')
+        //                     .post('/api/reviews')
         //                     .set('x-access-token', token)
-        //                     .send({ message: "Chào bạn, mình trao đổi tí được không?", receive_id: 2})
+        //                     .send({ review: "Chủ nhà uy tín", seller_id: 3, rating: 5})
         //     expect(res.status).toBe(200)
         // })
 
-        it('should return 403 if no authentication', async () => {
+        it('should return 400 if create review failed', async () => {
+            const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .post('/api/messages')
+                                .post('/api/reviews')
+                                .set('x-access-token', token)   
+            expect(res.status).toBe(400)
+        })
+
+        it('should return 403 if no permission', async () => {
+            const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 2)
+            const res = await request(server)
+                                .post('/api/reviews')
+                                .set('x-access-token', token)  
+                                .send({ review: "Chủ nhà uy tín", seller_id: 3, rating: 5}) 
             expect(res.status).toBe(403)
         })
     })
 })
 
-describe('/api/messages/:id', () => {
-    describe('PATCH /api/messages/:id', () => {
-        it('should return 200 if update message successful', async () => {
+describe('/api/reviews/:id', () => {
+    describe('PATCH /api/reviews/:id', () => {
+        it('should return 200 if update review successful', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .patch('/api/messages/13')
+                                .patch('/api/reviews/7')
                                 .set('x-access-token', token)   
-                                .send({ message: "Mình trao đổi tí được không nào?"})
+                                .send({ review: "Uy tín", rating: 4.5})
             expect(res.status).toBe(200)
         })
-        it('should return 204 if no messages found', async () => {
+        it('should return 204 if no reviews found', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .patch('/api/messages/1')
+                                .patch('/api/reviews/1')
                                 .set('x-access-token', token)   
-                                .send({ message: "Nhà này trong khu vực đông dân cư"})
+                                .send({ review: "Nhà này trong khu vực đông dân cư"})
             expect(res.status).toBe(204)
         })
         it('should return 403 if no permission', async () => {
             const token = await generateAuthToken(14, "anhth@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .patch('/api/messages/13')
+                                .patch('/api/reviews/6')
                                 .set('x-access-token', token)   
-                                .send({ message: "Trao đổi 1 tí được ko?"})
+                                .send({ review: "Nhà này trong khu vực đông dân cư"})
             expect(res.status).toBe(403)
         })
     })
 
-    describe('DELETE /api/messages/:id', () => {
-        // it('should return 200 if delete message successful', async () => {
-        //     const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
-        //     const res = await request(server)
-        //                         .delete('/api/messages/18')
-        //                         .set('x-access-token', token)   
-        //     expect(res.status).toBe(200)
-        // })
-        it('should return 204 if no messages found', async () => {
+    describe('DELETE /api/reviews/:id', () => {
+        it('should return 200 if delete review successful', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .delete('/api/messages/1')
+                                .delete('/api/reviews/7')
+                                .set('x-access-token', token)   
+            expect(res.status).toBe(200)
+        })
+        it('should return 204 if no reviews found', async () => {
+            const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
+            const res = await request(server)
+                                .delete('/api/reviews/1')
                                 .set('x-access-token', token)   
             expect(res.status).toBe(204)
         })
         it('should return 403 if no permission', async () => {
-            const token = await generateAuthToken(14, "anhth@rikkeisoft.com", "123456", 3)
+            const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .delete('/api/messages/8')
+                                .delete('/api/reviews/5')
                                 .set('x-access-token', token)   
             expect(res.status).toBe(403)
         })
     })
 
-    describe('GET /api/messages/:id/chat', () => {
-        it('should return 200 if get conversation with other user', async () => {
-            const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
-            const res = await request(server)
-                                .get('/api/messages/2/chat')
-                                .set('x-access-token', token)  
-            expect(res.status).toBe(200)
-        })
-        it('should return 204 if no conversation with other user', async () => {
-            const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
-            const res = await request(server)
-                                .get('/api/messages/3/chat')
-                                .set('x-access-token', token)  
-            expect(res.status).toBe(204)
-        })
-    })
 })
 
 async function generateAuthToken(id, email, password = 'fakepass', role_id ){
