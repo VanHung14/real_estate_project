@@ -9,19 +9,19 @@ let server;
 
 beforeAll(() => { server = require('../../index')} )
 
-describe('/api/comments', () => {
-    describe('GET /api/comments', () => {
-        it("should return all comments", async () => {
+describe('/api/messages', () => {
+    describe('GET /api/messages', () => {
+        it("should return all messages", async () => {
             const token = await generateAdminToken()
             const res = await request(server)
-                            .get('/api/comments/')
+                            .get('/api/messages/')
                             .set('x-access-token', token)   
             expect(res.status).toBe(200)
         })
-        it("should return list comments by post id", async () => {
+        it("should return list messages by post id", async () => {
             const token = await generateAdminToken()
             const res = await request(server)
-                            .get('/api/comments?postId=70')
+                            .get('/api/messages?postId=70')
                             .set('x-access-token', token)   
 
             expect(res.status).toBe(200)
@@ -29,7 +29,7 @@ describe('/api/comments', () => {
         it("should return 204 if no posts found", async () => {
             const token = await generateAdminToken()
             const res = await request(server)
-                            .get('/api/comments?postId=77')
+                            .get('/api/messages?postId=77')
                             .set('x-access-token', token)   
 
             expect(res.status).toBe(204)
@@ -37,79 +37,79 @@ describe('/api/comments', () => {
         it("should return 204 if no posts found", async () => {
             const token = await generateAuthToken(3, "chauhh@rikkeisoft.com", "123456", 2)
             const res = await request(server)
-                            .get('/api/comments')
+                            .get('/api/messages')
                             .set('x-access-token', token)   
             expect(res.status).toBe(403)
         })
     })
 
-    describe('POST /api/comment', () => {
-        it('should return comment if create comment successful', async () => {
+    describe('POST /api/message', () => {
+        it('should return message if create message successful', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                            .post('/api/comments')
+                            .post('/api/messages')
                             .set('x-access-token', token)
-                            .send({ comment: "Nhà rất đẹp, thẩm mỹ", post_id: 80})
+                            .send({ message: "Nhà rất đẹp, thẩm mỹ", post_id: 80})
             expect(res.status).toBe(200)
         })
 
-        it('should return 400 if create comment failed', async () => {
+        it('should return 400 if create message failed', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .post('/api/comments')
+                                .post('/api/messages')
                                 .set('x-access-token', token)   
             expect(res.status).toBe(400)
         })
     })
 })
 
-describe('/api/comments/:id', () => {
-    describe('PATCH /api/comments/:id', () => {
-        it('should return 200 if update comment successful', async () => {
+describe('/api/messages/:id', () => {
+    describe('PATCH /api/messages/:id', () => {
+        it('should return 200 if update message successful', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .patch('/api/comments/15')
+                                .patch('/api/messages/15')
                                 .set('x-access-token', token)   
-                                .send({ comment: "Nhà này trong khu vực đông dân cư"})
+                                .send({ message: "Nhà này trong khu vực đông dân cư"})
             expect(res.status).toBe(200)
         })
-        it('should return 204 if no comments found', async () => {
+        it('should return 204 if no messages found', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .patch('/api/comments/1')
+                                .patch('/api/messages/1')
                                 .set('x-access-token', token)   
-                                .send({ comment: "Nhà này trong khu vực đông dân cư"})
+                                .send({ message: "Nhà này trong khu vực đông dân cư"})
             expect(res.status).toBe(204)
         })
         it('should return 403 if no permission', async () => {
             const token = await generateAuthToken(14, "anhth@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .patch('/api/comments/15')
+                                .patch('/api/messages/15')
                                 .set('x-access-token', token)   
-                                .send({ comment: "Nhà này trong khu vực đông dân cư"})
+                                .send({ message: "Nhà này trong khu vực đông dân cư"})
             expect(res.status).toBe(403)
         })
     })
 
-    describe('DELETE /api/comments/:id', () => {
-        // it('should return 200 if delete comment successful', async () => {
+    describe('DELETE /api/messages/:id', () => {
+        // it('should return 200 if delete message successful', async () => {
         //     const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
         //     const res = await request(server)
-        //                         .delete('/api/comments/13')
+        //                         .delete('/api/messages/13')
         //                         .set('x-access-token', token)   
         //     expect(res.status).toBe(200)
         // })
-        it('should return 204 if no comments found', async () => {
+        it('should return 204 if no messages found', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .delete('/api/comments/13')
+                                .delete('/api/messages/13')
                                 .set('x-access-token', token)   
             expect(res.status).toBe(204)
         })
         it('should return 403 if no permission', async () => {
             const token = await generateAuthToken(16, "tinhtv_tts@rikkeisoft.com", "123456", 3)
             const res = await request(server)
-                                .delete('/api/comments/8')
+                                .delete('/api/messages/8')
                                 .set('x-access-token', token)   
             expect(res.status).toBe(403)
         })

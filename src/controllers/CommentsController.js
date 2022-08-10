@@ -62,7 +62,7 @@ class CommentsController {
                 }
             }
             else{ 
-                res.status(404).send('No comment found!')
+                res.status(204).send('No comment found!')
             }
             
             
@@ -89,13 +89,13 @@ class CommentsController {
             }
             console.log('data', data)
             let comments = await prisma.comments.findMany(data)
-            console.log(comments)
+            // console.log(comments)
             if(Number.isInteger(postId)){
-                if(comments) {
+                if(JSON.stringify(comments) != JSON.stringify([])) {
                     res.send(comments)
                 }
                 else{
-                    res.status(400).send('No comments found!')
+                    res.status(204).send('No comments found!')
                 }
             }
             else{
@@ -118,17 +118,22 @@ class CommentsController {
         try{
             let id = parseInt(req.params.id)
             let comment = await prisma.comments.findFirst({ where: { id: id}})
-            if(req.user.id == comment.user_id || req.user.role_id == 1 ){
-                let delCmt = await prisma.comments.delete({ where: { id: id}})
-                if(delCmt){
-                    res.send(delCmt)
+            if(comment){
+                if(req.user.id == comment.user_id || req.user.role_id == 1 ){
+                    let delCmt = await prisma.comments.delete({ where: { id: id}})
+                    if(delCmt){
+                        res.send(delCmt)
+                    }
+                    else {
+                        res.status(204).send('Delete comment failed!')
+                    }
                 }
-                else {
-                    res.status(400).send('Delete comment failed!')
+                else{
+                    res.status(403).send('Not permission! Only works with users who own this comment, or admin')
                 }
             }
-            else{
-                res.status(403).send('Not permission! Only works with users who own this comment, or admin')
+            else{ 
+                res.status(204).send('No comment found')
             }
         }
         catch(err){
