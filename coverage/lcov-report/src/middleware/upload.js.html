@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">73.33% </span>
+                <span class="strong">43.75% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>22/30</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>14/32</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">73.33% </span>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/3</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">43.75% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>22/30</span>
+                <span class='fraction'>14/32</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -92,24 +92,25 @@
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
 <a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -118,46 +119,54 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">var multer = require('multer')
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">var multer = require("multer");
 &nbsp;
 var storage = multer.diskStorage({
-    destination: (req, file, cb) =&gt; {
-        cb(null, 'src\\public\\post_img')
-    },
-    filename: (req, file, cb) =&gt; {
-        cb(null, Date.now() + '-'+ file.originalname)
-        // cb(null, file.fieldname + '-' + Date.now() + file.originalname.match(/\..*$/)[0])
-    }
-    
+  destination: <span class="fstat-no" title="function not covered" >(req, file, cb) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    cb(null, "src\\public\\post_img");</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+  filename: <span class="fstat-no" title="function not covered" >(req, file, cb) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    cb(null, Date.now() + "-" + file.originalname);</span>
+<span class="cstat-no" title="statement not covered" >    // cb(null, file.fieldname + '-' + Date.now() + file.originalname.match(/\..*$/)[0])</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
 });
 &nbsp;
-var upload = multer({ 
-    storage,
-    limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
-    fileFilter: (req, file, cb) =&gt; {
-<span class="branch-0 cbranch-no" title="branch not covered" >        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") </span>
-<span class="cstat-no" title="statement not covered" >        {</span>
-<span class="cstat-no" title="statement not covered" >            cb(null, true);</span>
-<span class="cstat-no" title="statement not covered" >        } else {</span>
-<span class="cstat-no" title="statement not covered" >            cb(null, false);</span>
-<span class="cstat-no" title="statement not covered" >            const err = new Error('Only .png, .jpg and .jpeg format allowed!')</span>
-<span class="cstat-no" title="statement not covered" >            err.name = 'ExtensionError'</span>
-<span class="cstat-no" title="statement not covered" >            return cb(err);</span>
-<span class="cstat-no" title="statement not covered" >        }</span>
-    }, });  
+var upload = multer({
+  storage,
+  limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
+  fileFilter: <span class="fstat-no" title="function not covered" >(req, file, cb) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (</span>
+<span class="cstat-no" title="statement not covered" >      file.mimetype == "image/png" ||</span>
+<span class="cstat-no" title="statement not covered" >      file.mimetype == "image/jpg" ||</span>
+<span class="cstat-no" title="statement not covered" >      file.mimetype == "image/jpeg"</span>
+<span class="cstat-no" title="statement not covered" >    ) {</span>
+<span class="cstat-no" title="statement not covered" >      cb(null, true);</span>
+<span class="cstat-no" title="statement not covered" >    } else {</span>
+<span class="cstat-no" title="statement not covered" >      cb(null, false);</span>
+<span class="cstat-no" title="statement not covered" >      const err = new Error("Only .png, .jpg and .jpeg format allowed!");</span>
+<span class="cstat-no" title="statement not covered" >      err.name = "ExtensionError";</span>
+<span class="cstat-no" title="statement not covered" >      return cb(err);</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+});
 &nbsp;
-&nbsp;
-module.exports = upload </pre></td></tr></table></pre>
+module.exports = upload;
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2022-08-10T10:39:37.207Z
+                at 2022-08-10T13:40:44.832Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 module.exports = {
   verifyJwtToken: (token, secretKey) => {
@@ -10,5 +10,5 @@ module.exports = {
         resolve(decoded);
       });
     });
-  }
-}
+  },
+};
