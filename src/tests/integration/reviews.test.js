@@ -98,7 +98,7 @@ describe("/api/reviews/:id", () => {
         3
       );
       const res = await request(server)
-        .patch("/api/reviews/7")
+        .patch("/api/reviews/6")
         .set("x-access-token", token)
         .send({ review: "Uy tín", rating: 4.5 });
       expect(res.status).toBe(200);

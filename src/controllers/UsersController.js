@@ -8,22 +8,26 @@ const randtoken = require("rand-token");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const config = require("../configs/config");
+const variable = require("../configs/variable");
 const fs = require("fs");
-
 const UsersService = require("../services/UsersService");
+const Joi = require("joi");
 
-var tokenList = {};
 class UsersController {
   // [GET] /api/users/:id
   async getUserById(req, res, next) {
     let id = parseInt(req.params.id);
     let user_id = req.user.id;
-    let role_id = req.user.role_id;
+    let role_id_auth = req.user.role_id;
     try {
-      let result = await UsersService.getUserById(id, user_id, role_id);
-      res.send(result);
+      if (role_id_auth != variable.AdminRoldId && user_id != id) {
+        return res.status(403).send("No permission!");
+      }
+      let user = await UsersService.getUserById(id);
+      if (!user) return res.status(variable.NoContent).send();
+      res.send(user);
     } catch (err) {
-      res.status(err).send();
+      res.status(variable.BadRequest).send(err);
     }
   }
 
@@ -32,18 +36,78 @@ class UsersController {
     let role_id = parseInt(req.params.roleId);
     let role_id_auth = req.user.role_id;
     try {
-      let result = await UsersService.getListUserByRoleId(
-        role_id,
-        role_id_auth
-      );
+      if (role_id_auth != 1) {
+        return res.status(403).send("No permission!");
+      }
+      let users = await UsersService.getListUserByRoleId(role_id);
+      if (JSON.stringify(users) == JSON.stringify([]))
+        return res.status(variable.NoContent).send();
+      res.send(users);
+    } catch (err) {
+      res.status(variable.BadRequest).send(err);
+    }
+  }
+
+  // [POST] /api/users
+  async register(req, res) {
+    const { error } = validateUser(req.body);
+    if (error)
+      return res.status(variable.BadRequest).send(error.details[0].message);
+    try {
+      const salt = await bcrypt.genSalt(10);
+      const date = new Date();
+      date.setHours(date.getHours() + 7);
+      const data = {
+        full_name: req.body.full_name,
+        email: req.body.email,
+        password: await bcrypt.hash(req.body.password, salt),
+        phone: req.body.phone,
+        role_id: parseInt(req.body.role_id),
+        created_at: date,
+        updated_at: date,
+      };
+      let result = await UsersService.register(data);
       res.send(result);
     } catch (err) {
-      res.status(err).send();
+      res
+        .status(variable.BadRequest)
+        .send("This email or phone-number has already registered");
+    }
+  }
+
+  // [POST]/api/users/login
+  async login(req, res) {
+    const { error } = validateLogin(req.body);
+    if (error)
+      return res.status(variable.BadRequest).send(error.details[0].message);
+    try {
+      let email = req.body.email;
+      let password = req.body.password;
+      let login = await UsersService.login(email, password);
+      if (login == variable.UnAuthorized)
+        return res
+          .status(variable.UnAuthorized)
+          .send("Invalid email or password.");
+      res.send(login);
+    } catch (err) {
+      res.status(variable.BadRequest).send(err);
+    }
+  }
+
+  // [POST]/api/users/refresh-token
+  async refreshToken(req, res) {
+    const refresh_token = req.body.refreshToken;
+    try {
+      let token = await UsersService.refreshToken(refresh_token);
+      if (token == variable.UnAuthorized)
+        return res.status(variable.UnAuthorized).send("Invalid refresh token!");
+      res.send(token);
+    } catch (err) {
+      res.status(variable.BadRequest).send(err);
     }
   }
 
   // [PATCH] /api/users/:id
-  // Only works for myself, or admin
   async updateUser(req, res, next) {
     try {
       const salt = await bcrypt.genSalt(10);
@@ -57,194 +121,46 @@ class UsersController {
       let phone = req.body.phone || undefined;
       let role_id = parseInt(req.body.role_id) || undefined;
       let id = parseInt(req.params.id);
-      if (req.user.id == 1 || req.user.id == id) {
-        let data = {};
-        let date = new Date();
-        date.setHours(date.getHours() + 7); // set up time in VN
-        data = {
-          full_name: full_name,
-          password: password,
-          phone: phone,
-          updated_at: date,
-          role_id: role_id,
-        };
-        let update = await prisma.users.update({ where: { id: id }, data });
-        if (update) {
-          res.send(update);
-        } else {
-          res.status(400).send("Update user failed!");
-        }
-      } else {
-        res.status(403).send("No permission! Only works for myself, or admin ");
-      }
+      let user_id = req.user.id;
+      let data = {};
+      let date = new Date();
+      date.setHours(date.getHours() + 7);
+      data = {
+        full_name: full_name,
+        password: password,
+        phone: phone,
+        updated_at: date,
+        role_id: role_id,
+      };
+      let role_id_auth = req.user.role_id;
+      if (user_id != id && role_id_auth != variable.AdminRoldId)
+        return res
+          .status(variable.Forbidden)
+          .send("No permission! Only works for myself, or admin");
+      let update = await UsersService.updateUser(id, data);
+      if (!update)
+        return res.status(variable.BadRequest).send("Update failed!");
+      res.send(update);
     } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err);
     }
   }
 
   // [DELETE] /api/users/:id
-  // Only works for admin.
   async deleteUser(req, res, next) {
     try {
       let id = parseInt(req.params.id);
-      if (req.user.role_id == 1) {
-        let posts = await prisma.posts.findMany({ where: { user_id: id } });
-        let postIds = [];
-        for (var i = 0; i < posts.length; ++i) {
-          postIds = posts[i].id;
-        }
-        let imgPath = await prisma.images.findMany({
-          where: { post_id: { in: postIds } },
-        });
-        let delList = [];
-        for (var i = 0; i < imgPath.length; ++i) {
-          delList.push(imgPath[i].image_path);
-        }
-        // console.log(delList)
-
-        let delUser = await prisma.users.delete({ where: { id: id } });
-        if (delUser) {
-          if (JSON.stringify(delList) != JSON.stringify([])) {
-            deleteImgInByPath(delList);
-          }
-          let delReview = await prisma.reviews.deleteMany({
-            where: { buyer_id: id },
-          });
-          let delMessage = await prisma.messages.deleteMany({
-            where: {
-              OR: [
-                {
-                  sender_id: id,
-                },
-                {
-                  receive_id: id,
-                },
-              ],
-            },
-          });
-          res.send(delUser);
-        } else {
-          res.status(404).send("Delete user failed!");
-        }
-      } else {
-        res.status(403).send("No permission! Only works for admin accounts");
-      }
+      let role_id_auth = req.user.role_id;
+      if (role_id_auth != 1)
+        return res
+          .status(variable.BadRequest)
+          .send("No permission! Only works for admin accounts");
+      let delUser = await UsersService.deleteUser(id);
+      if (delUser == variable.NotFound)
+        return res.status(variable.NotFound).send("No user is deleted");
+      res.send(delUser);
     } catch (err) {
-      res.status(400).send(err);
-    }
-  }
-
-  // [POST]/api/users/login
-  async login(req, res) {
-    try {
-      let user = await prisma.users.findFirst({
-        where: { email: req.body.email },
-      });
-      if (user) {
-        const validPassword = await bcrypt.compare(
-          req.body.password,
-          user.password
-        );
-        if (validPassword) {
-          const token = jwt.sign(user, config.secret, {
-            expiresIn: config.tokenLife,
-          });
-          const refreshToken = jwt.sign(user, config.refreshTokenSecret, {
-            expiresIn: config.refreshTokenLife,
-          });
-          tokenList[refreshToken] = user;
-          const response = {
-            token,
-            refreshToken,
-          };
-          res.json(response);
-        } else {
-          res.status(400).send("Invalid password!");
-        }
-      } else {
-        res.status(400).send("Invalid email!");
-      }
-    } catch (err) {
-      res.status(400).send(err);
-    }
-  }
-
-  // [POST]/api/users/refresh-token
-  async refreshToken(req, res) {
-    const { refreshToken } = req.body;
-    if (refreshToken && refreshToken in tokenList) {
-      try {
-        await utils.verifyJwtToken(refreshToken, config.refreshTokenSecret);
-        const user = tokenList[refreshToken];
-
-        const token = jwt.sign(user, config.secret, {
-          expiresIn: config.tokenLife,
-        });
-        const response = {
-          token,
-        };
-        res.status(200).json(response);
-      } catch (err) {
-        console.error(err);
-        res.status(403).json({
-          message: "Invalid refresh token",
-        });
-      }
-    } else {
-      res.status(400).json({
-        message: "Invalid request",
-      });
-    }
-  }
-
-  // [POST] /api/users
-  async register(req, res) {
-    // console.log(req.body)
-    try {
-      let user = await prisma.users.findFirst({
-        where: {
-          OR: [
-            { AND: { email: req.body.email } },
-            { AND: { phone: req.body.phone } },
-          ],
-        },
-      });
-      if (user)
-        res
-          .status(400)
-          .send("This email or phone-number has already registered");
-      else {
-        if (!validatePhone.validate(req.body.phone))
-          res.status(400).send("Invalid phone-number.");
-        else {
-          const salt = await bcrypt.genSalt(10);
-          const validateEmail = validator.validate(req.body.email);
-          if (validateEmail) {
-            let date = new Date();
-            date.setHours(date.getHours() + 7);
-            let user = await prisma.users.create({
-              data: {
-                full_name: req.body.full_name,
-                email: req.body.email,
-                password: await bcrypt.hash(req.body.password, salt),
-                phone: req.body.phone,
-                role_id: parseInt(req.body.role_id),
-                created_at: date,
-                updated_at: date,
-              },
-            });
-            if (user) {
-              res.send(user);
-            } else {
-              res.status(400).send("Register failed!");
-            }
-          } else {
-            res.status(400).send("This email is illegal!");
-          }
-        }
-      }
-    } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err);
     }
   }
 
@@ -253,120 +169,37 @@ class UsersController {
     try {
       var email = req.body.email;
       var phone = req.body.phone || "";
-      let user = await prisma.users.findFirst({
-        where: {
-          email: email,
-          phone: phone,
-        },
-      });
-      if (user) {
-        var token = randtoken.generate(20);
-        var sent = await sendEmail(email, token);
-        if (sent == 1) {
-          var data = {
-            reset_password_token: token,
-          };
-          await prisma.users.update({
-            where: {
-              email: email,
-            },
-            data,
-          });
-          res.send("Send email successful! resetPassToken: " + token);
-        } else {
-          res.status(400).send("Send email failed!");
-        }
-      } else {
-        res.status(404).send("No user founded!");
-      }
+      let sendEmail = await UsersService.forgotPassword(email, phone);
+      if (sendEmail == variable.NotFound)
+        return res
+          .status(variable.NotFound)
+          .send("Invalid email or phone-number");
+      if (sendEmail == variable.BadRequest)
+        return res.send("Send email failed!");
+      res.status(variable.OK).send("Send email successful!");
     } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err);
     }
-  }
-
-  //[GET] /users/reset-password?token=
-  linkResetPassword(req, res, next) {
-    // var token = req.query.token
-    // console.log(token)
   }
 
   //[put] /api/users/reset-password
   async resetPassword(req, res, next) {
-    var token = req.body.resetPassToken;
-    var password = req.body.password;
-    const salt = await bcrypt.genSalt(10);
-    let user = await prisma.users.findFirst({
-      where: {
-        reset_password_token: token,
-      },
-    });
-    if (user) {
-      let date = new Date();
-      date.setHours(date.getHours() + 7);
-      let update = await prisma.users.update({
-        where: {
-          email: user.email,
-        },
-        data: {
-          password: await bcrypt.hash(password, salt),
-          updated_at: date,
-        },
-      });
-      if (update) {
-        res.send(update);
-      } else {
-        res.status(400).send("Update failed!");
-      }
-    } else {
-      res.status(400).send("No user found!");
+    try {
+      var token = req.body.resetPassToken;
+      var password = req.body.password;
+      let reset = await UsersService.resetPassword(token, password);
+      if (reset == variable.BadRequest)
+        return res.status(variable.BadRequest).send("Reset password failed!");
+      res.send(reset);
+    } catch (err) {
+      res.status(variable.BadRequest).send(err);
     }
   }
 }
 
 module.exports = new UsersController();
 
-//send email
-async function sendEmail(email, token) {
-  var email = email;
-  var token = token;
-  var mail = nodemailer.createTransport({
-    service: "gmail",
-    port: 587,
-    secure: false,
-
-    auth: {
-      user: "dinhvanhung173@gmail.com",
-      pass: "mpsiygqphyqtmbfo",
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-
-  var mailOptions = {
-    from: "dinhvanhung173@gmail.com",
-    to: email,
-    subject: "Reset Password Link ",
-    html:
-      '<p>You requested for reset password, kindly use this <a href="http://localhost:3306/api/users/reset-password?token=' +
-      token +
-      '">link</a> to reset your password</p>',
-  };
-
-  return new Promise(function (resolve, reject) {
-    mail.sendMail(mailOptions, function (error, info) {
-      if (error) {
-        reject(0);
-      } else {
-        resolve(1);
-      }
-    });
-  });
-}
-
 async function deleteImgInByReqFiles(array) {
-  // delete by req.files
-  // console.log('array', array)
   try {
     // delete files in local folder when not update new images
     for (var i = 0; i < array.length; ++i) {
@@ -378,8 +211,6 @@ async function deleteImgInByReqFiles(array) {
 }
 
 async function deleteImgInByPath(array) {
-  // delete by path req.body
-  // console.log('array', array)
   try {
     // delete files in local folder when not update new images
     for (var i = 0; i < array.length; ++i) {
@@ -388,4 +219,27 @@ async function deleteImgInByPath(array) {
   } catch (err) {
     console.error(err);
   }
+}
+
+function validateUser(user) {
+  const schema = Joi.object({
+    full_name: Joi.string(),
+    email: Joi.string().min(5).max(255).required().email(),
+    password: Joi.string().min(5).max(255).required(),
+    phone: Joi.string().min(10).max(11),
+    role_id: Joi.number()
+      .min(variable.MinRoleId)
+      .max(variable.MaxRoleId)
+      .required(),
+    reset_password_token: Joi.string(),
+  });
+  return schema.validate(user);
+}
+
+function validateLogin(user) {
+  const schema = Joi.object({
+    email: Joi.string().min(5).max(255).required().email(),
+    password: Joi.string().min(5).max(255).required(),
+  });
+  return schema.validate(user);
 }
