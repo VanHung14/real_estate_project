@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Tokens{
+  id Int @id @default(autoincrement())
+  refresh_token String? @db.VarChar(1000)
+}
+
 model Roles {
   id Int @id @default(autoincrement())
   role_name String
@@ -18,7 +23,7 @@ model Users {
   full_name String?
   email String @unique
   password String
-  phone String? 
+  phone String? @unique
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
   reset_password_token String?

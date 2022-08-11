@@ -81,12 +81,12 @@ describe("GET /api/users/:id", () => {
     expect(res.status).toBe(200);
   });
 
-  it("should return 404 if invalid id is passed", async () => {
+  it("should return 204 if invalid id is passed", async () => {
     const token = await generateAdminToken();
     const res = await request(server)
       .get("/api/users/15")
       .set("x-access-token", token);
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(204);
   });
   it("should return 403 if user is not login or not permission", async () => {
     const res = await request(server).get("/api/users/14");
