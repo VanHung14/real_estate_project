@@ -4,137 +4,55 @@ const jwt = require("jsonwebtoken");
 const utils = require("../utils/utils");
 const fs = require("fs");
 
+const PostsService = require("../services/PostsService");
+const variable = require("../configs/variable");
+
 const prisma = new PrismaClient();
 
 class PostsController {
   // [GET] /api/posts?sort=&direct=&filter=address&city=&district=&ward=
   async getPosts(req, res, next) {
-    // console.log(req.query.search)
     try {
-      let perPage = 10;
       let page = parseInt(req.query.page) || 1;
-
+      let perPage = 10;
       if (JSON.stringify(req.query) === JSON.stringify({})) {
-        // get all posts
-        let posts = await prisma.posts.findMany({
-          skip: perPage * page - perPage,
-          take: perPage,
-        });
-        if (posts) {
-          for (var i = 0; i < posts.length; ++i) {
-            let address = await prisma.address.findFirst({
-              where: { id: posts[i].id },
-            });
-            posts[i].address = address;
-            let image = await prisma.images.findFirst({
-              where: { post_id: posts[i].id },
-            });
-            if (image != null) {
-              posts[i].first_image_path = image.image_path;
-            }
-          }
-
-          res.send(posts);
-        } else {
-          res.status(404).send("Not found!");
-        }
+        // get all posts by admin
+        let posts = await PostsService.getPostsNoFilter(page, perPage);
+        if (posts == variable.NotFound)
+          return res.status(variable.NotFound).send("No posts found.");
+        res.send(posts);
       } else {
-        // co sort hoac filter
-
+        // sort with filter or search
         let sortKey = req.query.sort || "price";
         let sortDirect = req.query.direct || "desc";
-        let sort = {};
-        sort[sortKey] = sortDirect;
-
         let filter = req.query.filter || "price";
-        // console.log(filter)
-        let posts = [];
-
-        if (filter == "price") {
-          let min = parseInt(req.query.min) || 0;
-          let max = parseInt(req.query.max) || 100;
-          posts = await prisma.posts.findMany({
-            skip: perPage * page - perPage,
-            take: perPage,
-            where: {
-              AND: [
-                {
-                  OR: [
-                    {
-                      title: { contains: req.query.search },
-                    },
-                    {
-                      content: { contains: req.query.search },
-                    },
-                  ],
-                },
-                {
-                  price: {
-                    lte: max,
-                    gte: min,
-                  },
-                },
-              ],
-            },
-            orderBy: [sort],
-          });
-        } else {
-          let address = await prisma.address.findMany({
-            skip: perPage * page - perPage,
-            take: perPage,
-            where: {
-              city: { contains: req.query.city },
-              district: { contains: req.query.district },
-              ward: { contains: req.query.ward },
-              street: { contains: req.query.street },
-            },
-          });
-          let idList = [];
-          for (var i = 0; i < address.length; ++i) {
-            idList.push(address[i].id);
-          }
-          // console.log(idList)
-          posts = await prisma.posts.findMany({
-            where: {
-              AND: [
-                {
-                  id: { in: idList },
-                },
-                {
-                  OR: [
-                    {
-                      title: { contains: req.query.search },
-                    },
-                    {
-                      content: { contains: req.query.search },
-                    },
-                  ],
-                },
-              ],
-            },
-            orderBy: [sort],
-          });
-        }
-        if (JSON.stringify(posts) != JSON.stringify([])) {
-          for (var i = 0; i < posts.length; ++i) {
-            let address = await prisma.address.findFirst({
-              where: { id: posts[i].id },
-            });
-            posts[i].address = address;
-            let image = await prisma.images.findFirst({
-              where: { post_id: posts[i].id },
-            });
-            if (image != null) {
-              posts[i].first_image_path = image.image_path;
-            }
-          }
-          res.send(posts);
-        } else {
-          res.status(204).send("Not posts found!");
-        }
+        let city = req.query.city || "";
+        let district = req.query.district || "";
+        let ward = req.query.ward || "";
+        let street = req.query.street || "";
+        let search = req.query.search || "";
+        let min = parseInt(req.query.min) || 0;
+        let max = parseInt(req.query.max) || 100;
+        let posts = await PostsService.getPostsByFilter(
+          page,
+          perPage,
+          sortKey,
+          sortDirect,
+          filter,
+          min,
+          max,
+          city,
+          district,
+          ward,
+          street,
+          search
+        );
+        if (posts == variable.NoContent)
+          return res.status(variable.NoContent).send();
+        res.send(posts);
       }
     } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err);
     }
   }
 
