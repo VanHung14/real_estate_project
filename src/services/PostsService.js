@@ -196,7 +196,6 @@ exports.createPost = async function (
           },
         },
       });
-      console.log(!post);
       if (!post) return variable.BadRequest;
       var array = files;
       for (var i = 0; i < array.length; ++i) {
@@ -215,17 +214,23 @@ exports.createPost = async function (
   }
 };
 
-exports.updatePost = async function (id, data, delList, files) {
+exports.updatePost = async function (id, data, addressData, delList, files) {
   try {
     let isValidPost = await prisma.posts.findFirst({ where: { id: id } });
     if (!isValidPost) return variable.NoContent;
     if (isValidPost.created_at.getTime() != isValidPost.updated_at.getTime())
       // if (false)
       return variable.ResetContent;
-    let post = await prisma.posts.update({
-      where: { id: id },
-      data,
-    });
+    let [post, updateAddress] = await prisma.$transaction([
+      prisma.posts.update({
+        where: { id: id },
+        data,
+      }),
+      prisma.address.update({
+        where: { id: id },
+        data: addressData,
+      }),
+    ]);
     if (!post) return variable.BadRequest;
     // delete image in local folder
     let imgPaths = [];
@@ -246,9 +251,6 @@ exports.updatePost = async function (id, data, delList, files) {
     if (JSON.stringify(imgPaths) != JSON.stringify([])) {
       deleteImgByPath(imgPaths);
     }
-    let deleteImg = await prisma.images.deleteMany({
-      where: { image_path: { in: imgPaths } },
-    });
     var array = files;
     for (var i = 0; i < array.length; ++i) {
       array[i] = {
@@ -285,11 +287,13 @@ exports.deletePost = async function (id) {
     for (var i = 0; i < imgPath.length; ++i) {
       delList.push(imgPath[i].image_path);
     }
-    let delPost = await prisma.posts.delete({
-      where: {
-        id: id,
-      },
-    });
+    let delPost = await prisma.$transaction([
+      prisma.posts.delete({
+        where: {
+          id: id,
+        },
+      }),
+    ]);
     if (!delPost) return variable.NotFound;
     deleteImgByPath(delList);
     return delPost;

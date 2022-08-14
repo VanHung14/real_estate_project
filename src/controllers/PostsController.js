@@ -165,7 +165,19 @@ class PostsController {
         status: status,
         updated_at: date,
       };
-      let update = await PostsService.updatePost(id, data, delList, files);
+      let addressData = {
+        city: city,
+        district: district,
+        ward: ward,
+        street: street,
+      };
+      let update = await PostsService.updatePost(
+        id,
+        data,
+        addressData,
+        delList,
+        files
+      );
       if (update == variable.NoContent) {
         deleteImgByReqFiles(req.files);
         return res.status(variable.NoContent).send();
