@@ -105,21 +105,24 @@ exports.deleteUser = async function (id) {
     for (var i = 0; i < imgPath.length; ++i) {
       delList.push(imgPath[i].image_path);
     }
-    let delUser = await prisma.users.delete({ where: { id: id } });
-    if (delUser) {
-      if (JSON.stringify(delList) != JSON.stringify([])) {
-        deleteImgInByPath(delList);
-      }
-      let delReview = await prisma.reviews.deleteMany({
-        where: { buyer_id: id },
-      });
-      let delMessage = await prisma.messages.deleteMany({
-        where: { OR: [{ sender_id: id }, { receive_id: id }] },
-      });
-      return delUser;
-    } else {
-      return variable.NotFound;
+    let delUser = await prisma.$transaction([
+      prisma.users.delete({ where: { id: id } }),
+    ]);
+    if (!delUser) return variable.NotFound;
+    if (JSON.stringify(delList) != JSON.stringify([])) {
+      deleteImgInByPath(delList);
     }
+    let delReview = await prisma.$transaction([
+      prisma.reviews.deleteMany({
+        where: { buyer_id: id },
+      }),
+    ]);
+    let delMessage = await prisma.$transaction([
+      prisma.messages.deleteMany({
+        where: { OR: [{ sender_id: id }, { receive_id: id }] },
+      }),
+    ]);
+    return delUser;
   } catch (err) {
     throw err;
   }
