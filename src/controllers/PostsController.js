@@ -52,29 +52,20 @@ class PostsController {
         res.send(posts);
       }
     } catch (err) {
-      res.status(variable.BadRequest).send(err);
+      res.status(variable.BadRequest).send(err.message);
     }
   }
 
   // [GET] /posts/:id/images
-  async getImagePathsByPostId(req, res, next) {
+  async getImageNamesByPostId(req, res, next) {
+    let id = parseInt(req.params.id);
     try {
-      let id = parseInt(req.params.id);
-      let imgPaths = await prisma.images.findMany({ where: { post_id: id } });
-      let list = [];
-      if (JSON.stringify(imgPaths) != JSON.stringify([])) {
-        for (var i = 0; i < imgPaths.length; ++i) {
-          let separate = imgPaths[i].image_path.split("\\");
-
-          list.push(separate[separate.length - 1]);
-          // console.log(imgPaths[i].image_path)
-        }
-        res.send(list);
-      } else {
-        res.status(404).send("No images found!");
-      }
+      let imgPaths = await PostsService.getImageNamesByPostId(id);
+      if (imgPaths == variable.NoContent)
+        return res.status(variable.NoContent).send();
+      res.send(imgPaths);
     } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err.message);
     }
   }
 
@@ -82,95 +73,60 @@ class PostsController {
   async getPostById(req, res, next) {
     try {
       let id = parseInt(req.params.id);
-      let post = await prisma.posts.findFirst({ where: { id: id } });
-      if (post) {
-        post.image_path_list = [];
-        let address = await prisma.address.findFirst({
-          where: { id: post.id },
-        });
-        post.address = address;
-        let images = await prisma.images.findMany({
-          where: { post_id: post.id },
-        });
-        for (var i = 0; i < images.length; ++i) {
-          console.log(images[i].image_path);
-          post.image_path_list.push(images[i].image_path);
-        }
-        res.send(post);
-      } else {
-        res.status(204).send("No post found!");
-      }
+      let post = await PostsService.getPostById(id);
+      if (post == variable.NoContent)
+        return res.status(variable.NoContent).send();
+      res.send(post);
     } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err.message);
     }
   }
 
   // [POST] api/posts/
   async createPost(req, res, next) {
     try {
-      if (req.user.role_id == 2) {
-        let address = await prisma.address.findFirst({
-          where: {
-            city: req.body.city,
-            district: req.body.district,
-            ward: req.body.ward,
-            street: req.body.street,
-          },
-        });
-        if (address) {
-          deleteImgInByReqFiles(req.files);
-          res.status(401).send("Address is already created!");
-        } else {
-          let date = new Date();
-          date.setHours(date.getHours() + 7);
-          let post = await prisma.posts.create({
-            data: {
-              title: req.body.title,
-              content: req.body.content,
-              price: parseFloat(req.body.price),
-              phone: req.body.phone,
-              status: req.body.status,
-              created_at: date,
-              updated_at: date,
-              user_id: req.user.id,
-              address: {
-                create: {
-                  city: req.body.city,
-                  district: req.body.district,
-                  ward: req.body.ward,
-                  street: req.body.street,
-                },
-              },
-            },
-          });
-
-          if (post) {
-            var array = req.files;
-            for (var i = 0; i < array.length; ++i) {
-              array[i] = {
-                image_path: array[i].path,
-                post_id: post.id,
-              };
-            }
-            let image = await prisma.images.createMany({
-              data: array,
-            });
-
-            res.send(post);
-          } else {
-            deleteImgInByReqFiles(req.files);
-            res.status(400).send("Post failed!");
-          }
-        }
-      } else {
-        deleteImgInByReqFiles(req.files);
+      if (req.user.role_id != 2) {
+        deleteImgByReqFiles(req.files);
         res
           .status(403)
           .send("No permission! Create post only works for seller.");
       }
+      let city = req.body.city;
+      let district = req.body.district;
+      let ward = req.body.ward;
+      let street = req.body.street;
+      let title = req.body.title;
+      let content = req.body.content;
+      let price = parseFloat(req.body.price);
+      let phone = req.body.phone;
+      let status = req.body.status;
+      let user_id = req.user.id;
+      let files = req.files;
+      let post = await PostsService.createPost(
+        city,
+        district,
+        ward,
+        street,
+        title,
+        content,
+        price,
+        phone,
+        status,
+        user_id,
+        files
+      );
+      if (post == variable.ResetContent) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.ResetContent).send();
+      }
+      if (post == variable.BadRequest) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.BadRequest).send("Create post failed!");
+      }
+      res.send(post);
     } catch (err) {
-      deleteImgInByReqFiles(req.files);
-      res.status(400).send(err);
+      deleteImgByReqFiles(req.files);
+      res.status(400).send(err.message);
     }
   }
 
@@ -187,157 +143,72 @@ class PostsController {
       let ward = req.body.ward || undefined;
       let street = req.body.street || undefined;
       let id = parseInt(req.params.id);
-
+      let delList = req.body.delList;
+      let user_id = req.user.id;
+      let files = req.files;
+      let post = await PostsService.getPostById(id);
+      if (!post) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.NoContent).send();
+      }
+      if (req.user.role_id != 1 && user_id != post.user_id) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.Forbidden).send("No permisstion!");
+      }
       let date = new Date();
       date.setHours(date.getHours() + 7);
-      let checkPost = await prisma.posts.findFirst({ where: { id: id } });
-      if (checkPost) {
-        if (req.user.role_id == 1 || req.user.id == checkPost.user_id) {
-          // check if post is available
-          if (
-            checkPost.created_at.getTime() != checkPost.updated_at.getTime()
-          ) {
-            // check if this post had been changed before?
-            // if(false){
-            // delete files in local folder when not update new images
-            deleteImgInByReqFiles(req.files);
-            res.status(400).send("This post had been changed before.");
-          } else {
-            let post = await prisma.posts.update({
-              where: {
-                id: id,
-              },
-              data: {
-                title: title,
-                content: content,
-                price: price,
-                phone: phone,
-                status: status,
-                updated_at: date,
-              },
-            });
-            if (post) {
-              // delete image in local folder
-              let imgPaths = [];
-              // console.log(typeof(req.body.delList) == 'object')
-              if (req.body.delList != undefined && req.body.delList != "") {
-                if (typeof req.body.delList == "object") {
-                  // console.log('1', req.body.delList)
-                  for (var i = 0; i < req.body.delList.length; ++i) {
-                    imgPaths[i] =
-                      "src\\public\\post_img\\" + req.body.delList[i];
-                  }
-                } else if (req.body.delList.includes(",")) {
-                  // console.log('2', req.body.delList)
-                  imgPaths = req.body.delList.split(",");
-                  for (var i = 0; i < imgPaths.length; ++i) {
-                    imgPaths[i] = "src\\public\\post_img\\" + imgPaths[i];
-                  }
-                } else if (req.body.delList.length > 0) {
-                  // console.log('3', req.body.delList)
-                  imgPaths.push("src\\public\\post_img\\" + req.body.delList);
-                }
-              }
-
-              // console.log(imgPaths)
-
-              if (JSON.stringify(imgPaths) != JSON.stringify([])) {
-                deleteImgInByPath(imgPaths);
-              }
-              // delete record in DB
-
-              let deleteImg = await prisma.images.deleteMany({
-                where: { image_path: { in: imgPaths } },
-              });
-
-              var array = req.files;
-
-              for (var i = 0; i < array.length; ++i) {
-                array[i] = {
-                  image_path: array[i].path,
-                  post_id: post.id,
-                };
-              }
-
-              let image = await prisma.images.createMany({
-                data: array,
-              });
-              let address = await prisma.address.update({
-                where: {
-                  id: post.id,
-                },
-                data: {
-                  city: city,
-                  district: district,
-                  ward: ward,
-                  street: street,
-                },
-              });
-              res.send(post);
-            } else {
-              deleteImgInByReqFiles(req.files);
-              res.status(400).send("Update failed!");
-            }
-          }
-        } else {
-          deleteImgInByReqFiles(req.files);
-          res.status(403).send("No permisstion!");
-        }
-      } else {
-        deleteImgInByReqFiles(req.files);
-        res.status(404).send("No posts found!");
+      let data = {
+        title: title,
+        content: content,
+        price: price,
+        phone: phone,
+        status: status,
+        updated_at: date,
+      };
+      let update = await PostsService.updatePost(id, data, delList, files);
+      if (update == variable.NoContent) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.NoContent).send();
       }
+      if (update == variable.BadRequest) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.BadRequest).send("Update failed!");
+      }
+      if (update == variable.ResetContent) {
+        deleteImgByReqFiles(req.files);
+        return res.status(variable.ResetContent).send("");
+      }
+      res.send(update);
     } catch (err) {
-      deleteImgInByReqFiles(req.files);
-      res.status(400).send(err);
+      deleteImgByReqFiles(req.files);
+      res.status(variable.BadRequest).send(err.message);
     }
   }
 
   // [DELETE] /api/posts/:id
-  // Only works with user who own this post, or admin.
   async deletePost(req, res, next) {
     try {
       var id = parseInt(req.params.id);
-      let post = await prisma.posts.findFirst({ where: { id: id } });
-      if (post) {
-        if (req.user.id == 1 || post.user_id == req.user.id) {
-          let imgPath = await prisma.images.findMany({
-            where: { post_id: id },
-          });
-          let delList = [];
-          for (var i = 0; i < imgPath.length; ++i) {
-            delList.push(imgPath[i].image_path);
-          }
-          let delPost = await prisma.posts.delete({
-            where: {
-              id: id,
-            },
-          });
-          if (delPost) {
-            deleteImgInByPath(delList);
-            res.send(delPost);
-          } else {
-            res.status(404).send("Delete failed!");
-          }
-        } else {
-          res
-            .status(403)
-            .send(
-              "No permission! Only works with user who own this post, or admin."
-            );
-        }
-      } else {
-        res.status(404).send(" No posts found!");
+      let post = await PostsService.getPostById(id);
+      if (typeof post != "object") {
+        return res.status(variable.NoContent).send();
       }
+      if (req.user.role_id != 1 && req.user.id != post.user_id) {
+        return res.status(variable.Forbidden).send("No permisstion!");
+      }
+      let delPost = await PostsService.deletePost(id);
+      if (delPost == variable.NotFound)
+        return res.status(variable.BadRequest).send("Delete failed!");
+      res.send(delPost);
     } catch (err) {
-      res.status(400).send(err);
+      res.status(variable.BadRequest).send(err.message);
     }
   }
 }
 
 module.exports = new PostsController();
 
-async function deleteImgInByReqFiles(array) {
+async function deleteImgByReqFiles(array) {
   // delete by req.files
   // console.log('array', array)
   try {
@@ -352,7 +223,7 @@ async function deleteImgInByReqFiles(array) {
   }
 }
 
-async function deleteImgInByPath(array) {
+async function deleteImgByPath(array) {
   // delete by path req.body
   // console.log('array', array)
   try {

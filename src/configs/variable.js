@@ -1,6 +1,7 @@
 module.exports = {
   OK: 200,
   NoContent: 204,
+  ResetContent: 205,
   BadRequest: 400,
   UnAuthorized: 401,
   Forbidden: 403,
