@@ -1,7 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const variable = require("../configs/variable");
-const fs = require("fs");
 
 exports.createComment = async function (data) {
   try {
@@ -29,7 +28,7 @@ exports.updateComment = async function (id, data, user_id) {
   }
 };
 
-exports.getComment = async function (data) {
+exports.getComments = async function (data) {
   try {
     let comments = await prisma.comments.findMany(data);
     if (JSON.stringify(comments) == JSON.stringify([]))
