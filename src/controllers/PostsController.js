@@ -87,7 +87,7 @@ class PostsController {
     try {
       if (req.user.role_id != 2) {
         deleteImgByReqFiles(req.files);
-        res
+        return res
           .status(403)
           .send("No permission! Create post only works for seller.");
       }
@@ -126,7 +126,7 @@ class PostsController {
       res.send(post);
     } catch (err) {
       deleteImgByReqFiles(req.files);
-      res.status(400).send(err.message);
+      res.status(variable.BadRequest).send(err.message);
     }
   }
 
