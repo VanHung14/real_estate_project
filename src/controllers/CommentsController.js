@@ -67,7 +67,7 @@ class CommentsController {
       } else {
         data["where"] = { post_id: postId };
       }
-      let comments = await CommentsService.getComment(data);
+      let comments = await CommentsService.getComments(data);
       if (comments == variable.NoContent)
         return res.status(variable.BadRequest).send("Get all comments failed!");
       res.send(comments);
