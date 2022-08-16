@@ -22,7 +22,7 @@ model Users {
   id Int @id @default(autoincrement())
   full_name String?
   email String @unique
-  password String
+  password String?
   phone String? @unique
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
