@@ -57,15 +57,16 @@ class UsersController {
       const salt = await bcrypt.genSalt(10);
       const date = new Date();
       date.setHours(date.getHours() + 7);
-      const data = {
+      let data = {
         full_name: req.body.full_name,
         email: req.body.email,
-        password: await bcrypt.hash(req.body.password, salt),
         phone: req.body.phone,
         role_id: parseInt(req.body.role_id),
         created_at: date,
         updated_at: date,
       };
+      if (req.body.password)
+        data.password = await bcrypt.hash(req.body.password, salt);
       let result = await UsersService.register(data);
       res.send(result);
     } catch (err) {
@@ -225,7 +226,7 @@ function validateUser(user) {
   const schema = Joi.object({
     full_name: Joi.string(),
     email: Joi.string().min(5).max(255).required().email(),
-    password: Joi.string().min(5).max(255).required(),
+    password: Joi.string().min(5).max(255),
     phone: Joi.string().min(10).max(11),
     role_id: Joi.number()
       .min(variable.MinRoleId)

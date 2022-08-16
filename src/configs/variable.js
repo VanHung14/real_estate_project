@@ -7,8 +7,9 @@ module.exports = {
   Forbidden: 403,
   NotFound: 404,
   MinRoleId: 1,
-  MaxRoleId: 3,
+  MaxRoleId: 4,
   AdminRoldId: 1,
   SellerRoldId: 2,
   BuyerRoldId: 3,
+  NonRoleId: 4,
 };
